@@ -31,10 +31,7 @@ namespace Lumen.UI
 
         private void HandleEnergyChanged(float current, float max)
         {
-            if (energyBar == null)
-            {
-                return;
-            }
+            if (energyBar == null) return;
             energyBar.maxValue = max;
             energyBar.value = current;
         }
