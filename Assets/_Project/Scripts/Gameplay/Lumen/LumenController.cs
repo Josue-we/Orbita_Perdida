@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lumen.Core;
 
 namespace Lumen.Gameplay
 {
@@ -31,6 +32,9 @@ namespace Lumen.Gameplay
 
         private void Update()
         {
+            if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Playing)
+                return; // controle travado durante a intro (ou uma futura pausa)
+
             Vector3 input = ReadInput();
             bool isThrusting = input.sqrMagnitude > 0.0001f;
 

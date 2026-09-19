@@ -104,7 +104,57 @@ dentro da cena de exemplo deles. Não importe/ative esse perfil de pós-processa
 na nossa cena — para a Iris Xe, mantenha o pós-processamento off ou bem leve.
 Skybox e alguns objetos decorativos parados custam muito pouco; bloom pesado custa bem mais.
 
+## Atualização: efeitos sonoros (seleção, acerto, erro, coleta)
+
+O `AudioManager` agora também tem 4 campos de efeitos sonoros, e reage sozinho
+a eventos do jogo (mesmo que esses eventos ainda não sejam disparados por
+nenhum sistema real — isso vem com a Fase 2/quiz). Quando esse sistema
+existir, ele só vai chamar `EventBus.RaiseAnswerCorrect()` etc., e o som já
+toca automaticamente, sem precisar mexer no AudioManager de novo.
+
+### Fontes recomendadas (gratuitas, CC0)
+
+- **Interface Sounds** (kenney.nl/assets/interface-sounds) — para seleção, acerto, erro.
+- **Sci-fi Sounds** (kenney.nl/assets/sci-fi-sounds) — para o som de coleta do fragmento.
+
+### Passos
+
+1. Baixe os pacotes e escolha 4 arquivos: um de clique/seleção, um de acerto,
+   um de erro, um de coleta.
+2. Renomeie os arquivos para conter uma palavra-chave reconhecível antes de
+   importar — por exemplo `select_beep.wav`, `correct_chime.wav`,
+   `incorrect_buzz.wav`, `collect_pickup.wav`. Isso ajuda o script a
+   identificar automaticamente qual é qual.
+3. Arraste os 4 arquivos para `Assets/_Project/Audio` (pode ser direto na
+   pasta raiz, ou dentro de uma subpasta `SFX` — tanto faz, a busca é recursiva).
+4. Rode `LUMEN > Montar Cena de Tutorial` de novo.
+5. Olhe o Console: cada som atribuído automaticamente aparece como log; cada
+   som que não foi encontrado aparece como aviso (warning) dizendo qual
+   palavra-chave ele procurou. Se algum não bater, arraste manualmente no
+   Inspector do `AudioManager`.
+
+Nenhum desses sons toca sozinho ainda na Fase 1 (não tem quiz nem coleta de
+fragmento no tutorial) — isso é esperado. Eles vão tocar assim que a Fase 2
+existir.
+
+## Atualização: abertura da história
+
+Antes do jogador ganhar controle do LUMEN, agora roda uma sequência de texto
+estilo "log de sistema" contando a tempestade solar, a perda de contato com a
+Terra e a falta de combustível — sem áudio, só texto na tela (decisão tomada
+junto com você). O controle do LUMEN fica travado até a sequência terminar.
+
+- Pressione qualquer tecla para avançar uma linha antes da hora.
+- Pressione Esc para pular a sequência inteira de uma vez.
+- O texto está fixo em `IntroSequenceController.cs` por enquanto — quando o
+  sistema de dados (ScriptableObjects) existir na Fase 2, isso pode migrar
+  para lá, mas não é obrigatório.
+
+Rode `LUMEN > Montar Cena de Tutorial` de novo para gerar o painel de intro
+automaticamente. Nada muda no que já existia — é só mais uma etapa antes do
+tutorial começar.
+
 ## Próximo passo sugerido
 
-Quando você validar que isso roda bem no seu hardware, seguimos para a Fase 2
-(Netuno): PhaseManager, PhaseData, sistema de quiz e a primeira fala real da NOVA.
+Fase 2 (Netuno): PhaseManager, PhaseData/QuizData como ScriptableObjects,
+painel de quiz na UI, e a primeira fala real da NOVA.
