@@ -154,7 +154,51 @@ Rode `LUMEN > Montar Cena de Tutorial` de novo para gerar o painel de intro
 automaticamente. Nada muda no que já existia — é só mais uma etapa antes do
 tutorial começar.
 
+## Atualização: Fase 2 (Netuno) — quiz, NOVA e fragmentos
+
+Essa é a primeira fase de verdade além do tutorial. Sistemas novos:
+
+- **Dados** (`Scripts/Data`): `PhaseData` e `QuizQuestionData`, ScriptableObjects.
+  O construtor de cena já cria as instâncias de Netuno automaticamente em
+  `Assets/_Project/Data/Phases` e `Assets/_Project/Data/Quizzes` — você pode
+  abrir esses arquivos no Inspector e editar o texto da pergunta, das
+  alternativas ou das falas da NOVA livremente, sem mexer em código.
+- **NOVA** (`Scripts/Narrative/NovaNarrationController`): legenda na parte de
+  baixo da tela (diferente da intro, que é tela cheia) — não trava a visão do
+  jogo.
+- **Quiz** (`Scripts/Gameplay/Challenges/QuizChallengeController`): painel
+  central com a pergunta e até 3 alternativas. Errar mostra feedback e deixa
+  tentar de novo; acertar libera o fragmento.
+- **Gatilho do planeta** (`Scripts/Gameplay/PlanetApproachTrigger`): colocado
+  no "Netuno_Encounter" na cena, a ~150 unidades à frente do ponto de partida.
+  Trava o movimento, toca a narração, mostra o quiz, e ao acertar devolve
+  energia e libera o jogador — tudo isso é reaproveitável: Urano e Marte vão
+  usar exatamente essa mesma classe, só com um `PhaseData` diferente.
+
+### Correção importante: Rigidbody no LUMEN
+
+Adicionei um `Rigidbody` cinemático (sem gravidade) no LUMEN. Sem isso, a
+Unity não garante disparar `OnTriggerEnter` quando os objetos se movem só por
+`transform.position` (como o nosso LumenController faz) — é uma pegadinha
+conhecida da engine. Isso pode ter afetado o gatilho de saída do tutorial
+desde o início. Depois de atualizar os scripts, teste de novo o tutorial e
+confirme que a mensagem "Tutorial concluído" aparece no Console.
+
+### Passos
+
+1. Substitua todos os scripts pela versão nova (são bastante arquivos dessa
+   vez — o mais seguro é apagar a pasta `Assets/_Project/Scripts` inteira do
+   seu projeto e colar a nova por cima).
+2. Rode `LUMEN > Montar Cena de Tutorial` de novo.
+3. Play. Atravesse o gatilho do tutorial (deve liberar o espaço de voo), e
+   continue voando para frente (eixo Z positivo) até avistar Netuno.
+4. Ao entrar na órbita, a NOVA fala, depois o quiz aparece. Responda —
+   errar deixa tentar de novo, acertar dá o fragmento e libera o movimento.
+5. Confira o HUD: o contador de fragmentos deve ir de 0/5 para 1/5.
+
 ## Próximo passo sugerido
 
-Fase 2 (Netuno): PhaseManager, PhaseData/QuizData como ScriptableObjects,
-painel de quiz na UI, e a primeira fala real da NOVA.
+Com Netuno funcionando, Urano e Marte são "quase de graça": basta duplicar o
+padrão de `EnsureNetunoPhase()` no construtor de cena com um novo `PhaseData`
+e reposicionar o gatilho mais à frente. Depois disso, partimos para os dois
+minigames (Saturno e Júpiter) e a Fase 7 (Retorno à Terra).

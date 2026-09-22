@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Netuno_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Netuno tem os ventos mais fortes do Sistema Solar, apesar de estar tao
+    longe do Sol. Qual e a velocidade aproximada desses ventos?
+  Options:
+  - Cerca de 2.100 km/h
+  - Cerca de 100 km/h
+  - Cerca de 500 km/h
+  CorrectIndex: 0
+  CorrectFeedback: Isso mesmo! Os ventos de Netuno chegam a ate 2.100 km/h - os mais
+    rapidos ja registrados em qualquer planeta.
+  IncorrectFeedback: Nao e bem isso. Pense em algo bem mais extremo - os mais rapidos
+    do Sistema Solar.

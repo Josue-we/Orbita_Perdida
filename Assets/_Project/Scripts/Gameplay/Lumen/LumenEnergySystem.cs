@@ -12,8 +12,8 @@ namespace Lumen.Gameplay
     public class LumenEnergySystem : MonoBehaviour
     {
         [SerializeField] private float maxEnergy = 100f;
-        [SerializeField] private float idleDrainPerSecond = 0.5f;
-        [SerializeField] private float thrustDrainPerSecond = 1.5f;
+        [SerializeField] private float idleDrainPerSecond = 0.6f;
+        [SerializeField] private float thrustDrainPerSecond = 2.2f;
 
         public float CurrentEnergy { get; private set; }
         public float MaxEnergy => maxEnergy;

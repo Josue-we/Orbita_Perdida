@@ -7,7 +7,8 @@ namespace Lumen.Core
         Boot,
         Intro,
         Playing,
-        Paused
+        Paused,
+        Challenge
     }
 
     /// <summary>

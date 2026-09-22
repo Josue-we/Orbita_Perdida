@@ -16,13 +16,19 @@ namespace Lumen.Core
         public static event Action OnAnswerIncorrect;
         public static event Action<string> OnFragmentCollected; // nome do planeta
 
+        /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
+        public static bool TutorialCompleted { get; private set; }
+
         public static void RaiseEnergyChanged(float current, float max)
         {
             OnEnergyChanged?.Invoke(current, max);
         }
 
+        /// <summary>Idempotente: so dispara uma vez em toda a partida.</summary>
         public static void RaiseTutorialCompleted()
         {
+            if (TutorialCompleted) return;
+            TutorialCompleted = true;
             OnTutorialCompleted?.Invoke();
         }
 
