@@ -18,9 +18,14 @@ namespace Lumen.Gameplay
     public class PlanetApproachTrigger : MonoBehaviour
     {
         [SerializeField] private PhaseData phase;
+        [SerializeField] private Transform nextPlanet;   // proximo da rota (null = destino final)
+        [SerializeField] private int routeIndex = -1;    // ordem da rota (0 = Netuno ...)
 
         /// <summary>Nome do planeta/fase - usado pelo HUD para a seta e o objetivo.</summary>
         public string PhaseName => phase == null ? name : phase.PlanetName;
+
+        /// <summary>Ordem da rota - o HUD usa para achar o primeiro destino apos o tutorial.</summary>
+        public int RouteIndex => routeIndex;
 
         private bool _triggered;
         private Transform _player;
@@ -120,13 +125,34 @@ namespace Lumen.Gameplay
 
         private void CompletePhase(LumenEnergySystem energy)
         {
+            // Ultimo planeta da rota (nextPlanet nulo): missao concluida, sem fragmento.
+            if (nextPlanet == null)
+            {
+                EventBus.RaiseMissionComplete();
+                GameManager.Instance.SetState(GameState.Playing);
+                return;
+            }
+
             EventBus.RaiseFragmentCollected(phase.PlanetName);
             if (energy != null) energy.Refill(phase.FragmentEnergyReward);
 
             GameManager.Instance.SetState(GameState.Playing);
+
+            // Seta de navegacao aponta para o proximo planeta da rota.
+            var nextTrigger = nextPlanet != null
+                ? nextPlanet.GetComponent<PlanetApproachTrigger>()
+                : null;
+            if (nextTrigger != null)
+                EventBus.RaiseNavigateTo(nextPlanet, nextTrigger.PhaseName);
         }
 
         /// <summary>Usado pelo TutorialSceneBuilder para atribuir o PhaseData sem reflection.</summary>
         public void SetPhase(PhaseData phaseData) => phase = phaseData;
+
+        /// <summary>Usado pelo TutorialSceneBuilder para encadear a rota planeta a planeta.</summary>
+        public void SetNextPlanet(Transform planet) => nextPlanet = planet;
+
+        /// <summary>Usado pelo TutorialSceneBuilder para definir a ordem da rota (0 = primeiro destino).</summary>
+        public void SetRouteIndex(int index) => routeIndex = index;
     }
 }

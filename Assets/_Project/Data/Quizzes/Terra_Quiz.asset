@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Terra_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: O que torna a Terra unica no Sistema Solar, ate hoje?
+  Options:
+  - Agua liquida abundante e vida
+  - Tamanho recorde
+  - Maior numero de luas
+  CorrectIndex: 0
+  CorrectFeedback: Exatamente! E o unico mundo conhecido com agua liquida em abundancia
+    e vida.
+  IncorrectFeedback: Pense no que nenhum outro planeta conhecido tem de tao especial...

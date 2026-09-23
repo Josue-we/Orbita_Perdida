@@ -18,8 +18,10 @@ namespace Lumen.UI
         [Header("Barras (canto superior esquerdo)")]
         [SerializeField] private Slider signalBar;   // sinal com a Terra
         [SerializeField] private Slider energyBar;   // combustivel
-        [SerializeField] private Text signalLabel;
-        [SerializeField] private Text energyLabel;
+        [SerializeField] private Text signalLabel;   // legenda acima: "SINAL"
+        [SerializeField] private Text energyLabel;   // legenda acima: "COMBUSTIVEL"
+        [SerializeField] private Text signalPercentText; // % DENTRO da barra
+        [SerializeField] private Text energyPercentText; // % DENTRO da barra
 
         [Header("Textos")]
         [SerializeField] private Text objectiveLabel;
@@ -52,6 +54,8 @@ namespace Lumen.UI
             EventBus.OnEnergyChanged += HandleEnergyChanged;
             EventBus.OnFragmentCollected += HandleFragmentCollected;
             EventBus.OnTutorialCompleted += HandleTutorialCompleted;
+            EventBus.OnNavigateTo += HandleNavigateTo;
+            EventBus.OnMissionComplete += HandleMissionComplete;
         }
 
         private void OnDisable()
@@ -59,6 +63,8 @@ namespace Lumen.UI
             EventBus.OnEnergyChanged -= HandleEnergyChanged;
             EventBus.OnFragmentCollected -= HandleFragmentCollected;
             EventBus.OnTutorialCompleted -= HandleTutorialCompleted;
+            EventBus.OnNavigateTo -= HandleNavigateTo;
+            EventBus.OnMissionComplete -= HandleMissionComplete;
         }
 
         private void Start()
@@ -136,8 +142,8 @@ namespace Lumen.UI
             energyBar.maxValue = max;
             energyBar.value = current;
             SetFill(_energyFill, current, max);
-            if (energyLabel != null)
-                energyLabel.text = $"COMBUSTIVEL {Mathf.RoundToInt(current)}%";
+            if (energyPercentText != null)
+                energyPercentText.text = $"{Mathf.RoundToInt(current)}%";
         }
 
         private void HandleFragmentCollected(string planetName)
@@ -163,20 +169,52 @@ namespace Lumen.UI
             // sao liberados juntos (o LUMEN escuta o mesmo evento).
             _tutorialCompleteBannerTimer = 4f;
             if (objectiveLabel != null)
-                objectiveLabel.text = "TUTORIAL CONCLUIDO! Boost liberado (Shift). Siga a seta ate Netuno.";
+                objectiveLabel.text = "TUTORIAL CONCLUIDO! Boost liberado (Shift). Siga a seta.";
 
             _navigationActive = true;
 
-            var planet = Object.FindFirstObjectByType<PlanetApproachTrigger>();
-            if (planet == null)
+            // Primeiro destino: o planeta de menor RouteIndex (Netuno = 0).
+            var start = GetRouteStart();
+            if (start == null)
             {
                 if (objectiveLabel != null)
-                    objectiveLabel.text = "Tutorial concluido! Aproxime-se do primeiro planeta.";
+                    objectiveLabel.text = "Tutorial concluido! Siga para o primeiro planeta.";
                 return;
             }
 
-            _navigationTarget = planet.transform;
-            _targetName = planet.PhaseName;
+            _navigationTarget = start.transform;
+            _targetName = start.PhaseName;
+        }
+
+        private static PlanetApproachTrigger GetRouteStart()
+        {
+            PlanetApproachTrigger[] triggers =
+                Object.FindObjectsByType<PlanetApproachTrigger>(FindObjectsSortMode.None);
+
+            PlanetApproachTrigger best = null;
+            foreach (var t in triggers)
+            {
+                if (t.RouteIndex < 0) continue;
+                if (best == null || t.RouteIndex < best.RouteIndex) best = t;
+            }
+
+            return best;
+        }
+
+        private void HandleNavigateTo(Transform target, string displayName)
+        {
+            _navigationTarget = target;
+            _targetName = displayName;
+            _navigationActive = true;
+        }
+
+        private void HandleMissionComplete()
+        {
+            _navigationActive = false;
+            _navigationTarget = null;
+            if (navArrow != null) navArrow.gameObject.SetActive(false);
+            if (objectiveLabel != null)
+                objectiveLabel.text = "MISSAO CONCLUIDA! Bem-vinda de volta a Terra, LUMEN.";
         }
 
         /// <summary>
@@ -209,8 +247,8 @@ namespace Lumen.UI
 
             signalBar.value = signal;
             SetFill(_signalFill, signal, 100f);
-            if (signalLabel != null)
-                signalLabel.text = $"SINAL {Mathf.RoundToInt(signal)}%";
+            if (signalPercentText != null)
+                signalPercentText.text = $"{Mathf.RoundToInt(signal)}%";
         }
 
         private static void SetFill(Image fill, float current, float max)
@@ -265,7 +303,8 @@ namespace Lumen.UI
         }
 
         /// <summary>Usado pelo TutorialSceneBuilder para ligar as referencias de UI sem reflection.</summary>
-        public void Configure(Slider energy, Slider signal, Text objective, Text fragments, Text sigLabel, Text fuelLabel)
+        public void Configure(Slider energy, Slider signal, Text objective, Text fragments, Text sigLabel, Text fuelLabel,
+            Text fuelPercent, Text sigPercent)
         {
             energyBar = energy;
             signalBar = signal;
@@ -273,6 +312,8 @@ namespace Lumen.UI
             fragmentsLabel = fragments;
             signalLabel = sigLabel;
             energyLabel = fuelLabel;
+            energyPercentText = fuelPercent;
+            signalPercentText = sigPercent;
 
             // Resolve as imagens de preenchimento para dirigir o fillAmount direto.
             _signalFill = ResolveFill(signal);

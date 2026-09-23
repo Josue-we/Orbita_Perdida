@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Jupiter_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Que fenomeno aparece na superficie de Jupiter ha seculos?
+  Options:
+  - A Grande Mancha Vermelha, uma tempestade maior que a Terra
+  - Um vulcao gigante
+  - Um oceano de lava
+  CorrectIndex: 0
+  CorrectFeedback: Correto! A Grande Mancha Vermelha e uma tempestade colossal observada
+    ha mais de 300 anos, maior que a Terra.
+  IncorrectFeedback: Quase - repare na mancha enorme que gira no hemisferio sul do
+    gigante gasoso.

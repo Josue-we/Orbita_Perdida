@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Lumen.Core
 {
@@ -15,6 +16,8 @@ namespace Lumen.Core
         public static event Action OnAnswerCorrect;
         public static event Action OnAnswerIncorrect;
         public static event Action<string> OnFragmentCollected; // nome do planeta
+        public static event Action<Transform, string> OnNavigateTo; // (proximo alvo, nome)
+        public static event Action OnMissionComplete;
 
         /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
         public static bool TutorialCompleted { get; private set; }
@@ -50,6 +53,16 @@ namespace Lumen.Core
         public static void RaiseFragmentCollected(string planetName)
         {
             OnFragmentCollected?.Invoke(planetName);
+        }
+
+        public static void RaiseNavigateTo(Transform target, string displayName)
+        {
+            OnNavigateTo?.Invoke(target, displayName);
+        }
+
+        public static void RaiseMissionComplete()
+        {
+            OnMissionComplete?.Invoke();
         }
     }
 }

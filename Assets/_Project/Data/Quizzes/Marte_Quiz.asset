@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Marte_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Por que Marte tem uma cor avermelhada?
+  Options:
+  - Oxido de ferro (ferrugem) na superficie
+  - Pedras vulcanicas quentes
+  - Gelo refletindo o ceu
+  CorrectIndex: 0
+  CorrectFeedback: Perfeito! O solo de Marte e rico em oxido de ferro, que da ao
+    planeta o tom ferrugem.
+  IncorrectFeedback: Nao e calor - e a composicao quimica do solo que da essa cor
+    a Marte.

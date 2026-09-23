@@ -23,7 +23,7 @@ namespace Lumen.Gameplay
         [Header("Limites de voo")]
         [SerializeField] private Vector3 boundsCenter = Vector3.zero;
         [SerializeField] private float boundsRadius = 45f;
-        [SerializeField] private float openWorldRadius = 900f;
+        [SerializeField] private float openWorldRadius = 4500f;
 
         private Vector3 _velocity;
         private LumenEnergySystem _energy;

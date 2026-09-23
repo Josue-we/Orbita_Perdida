@@ -76,7 +76,7 @@ namespace Lumen.EditorTools
             EnsureSkybox();
             EnsureBackgroundDecor();
             EnsureAudioManager();
-            EnsureNetunoPhase();
+            EnsureAllPlanetRoute();
 
             Debug.Log("[LUMEN] Cena montada. Pressione Play para testar. " +
                       "Controles: WASD para mover, Space/Ctrl para subir e descer. " +
@@ -145,10 +145,10 @@ namespace Lumen.EditorTools
             if (lumen.GetComponent<LumenController>() == null)
                 lumen.AddComponent<LumenController>();
 
-            // O mundo cresceu junto com Netuno: garante que o limite de voo acumule
-            // o raio aberto novo mesmo se a instancia guardar o valor antigo.
+            // O mundo cresceu junto com a rota ate a Terra (3.600+): garante que o limite
+            // de voo acumule o raio aberto novo mesmo se a instancia guardar o valor antigo.
             var lumenController = lumen.GetComponent<LumenController>();
-            if (lumenController != null) lumenController.SetOpenWorldRadius(900f);
+            if (lumenController != null) lumenController.SetOpenWorldRadius(4500f);
 
             return lumen;
         }
@@ -167,6 +167,9 @@ namespace Lumen.EditorTools
             var follow = cam.GetComponent<CameraFollow>();
             if (follow == null) follow = cam.gameObject.AddComponent<CameraFollow>();
             follow.SetTarget(target);
+
+            // A rota chega a 3.600+ unidades; o plano distante padrão (1000) cortaria os planetas longos.
+            cam.farClipPlane = 20000f;
         }
 
         private static void EnsureExitTrigger()
@@ -263,24 +266,41 @@ namespace Lumen.EditorTools
             var fragments = FindOrCreate(canvasGO.transform, "FragmentsLabel", CreateFragmentsLabel);
             var navArrow = FindOrCreate(canvasGO.transform, "NavArrow", CreateNavArrow);
 
-            hud.Configure(energyBar, signalBar, objective, fragments, signalLabel, energyLabel);
+            // Porcentagem vive DENTRO de cada barra (PercentLabel criado junto com elas).
+            var signalPercent = signalBar.transform.Find("PercentLabel").GetComponent<Text>();
+            var energyPercent = energyBar.transform.Find("PercentLabel").GetComponent<Text>();
+
+            hud.Configure(energyBar, signalBar, objective, fragments, signalLabel, energyLabel,
+                          energyPercent, signalPercent);
             hud.SetupNavigation(navArrow);
         }
 
-        /// <summary>Cria uma barra com fundo e preenchimento visiveis, ou conserta uma antiga sem visual.</summary>
+        /// <summary>Cria uma barra "vazada" (moldura + fundo + preenchimento + % dentro),
+        /// ou conserta uma antiga sem visual novo (sem Border/PercentLabel).</summary>
         private static Slider EnsureHudBar(Transform parent, string name, Color fill, Vector2 anchorMin, Vector2 anchorMax)
         {
             var go = parent.Find(name);
             if (go != null)
             {
                 var slider = go.GetComponent<Slider>();
-                if (slider != null && slider.fillRect != null && go.Find("Fill") != null)
+                var bg = go.Find("Background");
+                var bgImg = bg != null ? bg.GetComponent<Image>() : null;
+
+                // Reutiliza apenas se for EXATAMENTE o estilo vazado atual
+                // (miolo com alpha 0.15). Qualquer variacao antiga - mesmo que ja
+                // tenha Border/PercentLabel - e recriada para nao vazar visual velho.
+                bool hollowStyle = slider != null && slider.fillRect != null &&
+                                   go.Find("Fill") != null && go.Find("Border") != null &&
+                                   go.Find("PercentLabel") != null &&
+                                   bgImg != null && Mathf.Abs(bgImg.color.a - 0.15f) <= 0.001f;
+
+                if (hollowStyle)
                 {
                     PositionAt(go, anchorMin, anchorMax);
                     return slider;
                 }
 
-                Object.DestroyImmediate(go.gameObject); // barra antiga nua (sem imagens): recria
+                Object.DestroyImmediate(go.gameObject); // estilo antigo: recria no padrao vazado
             }
 
             var bar = CreateHudBar(parent, name, fill);
@@ -293,24 +313,53 @@ namespace Lumen.EditorTools
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
 
+            // Moldura "vazada": borda colorida grossa ao redor...
+            var border = new GameObject("Border", typeof(RectTransform));
+            border.transform.SetParent(go.transform, false);
+            RectStretch(border.GetComponent<RectTransform>());
+            var borderImg = border.AddComponent<Image>();
+            borderImg.color = new Color(fillColor.r, fillColor.g, fillColor.b, 0.9f);
+            borderImg.raycastTarget = false;
+
+            // ...miolo TRANSPARENTE (so um tinte levinho para destacar do cenario):
+            // sem preenchimento, a barra parece mesmo vazia.
             var bg = new GameObject("Background", typeof(RectTransform));
             bg.transform.SetParent(go.transform, false);
             RectStretch(bg.GetComponent<RectTransform>());
+            bg.GetComponent<RectTransform>().offsetMin = new Vector2(5f, 5f);
+            bg.GetComponent<RectTransform>().offsetMax = new Vector2(-5f, -5f);
             var bgImg = bg.AddComponent<Image>();
-            bgImg.color = new Color(0f, 0f, 0f, 0.55f);
+            bgImg.color = new Color(0f, 0f, 0f, 0.15f);
+            bgImg.raycastTarget = false;
 
+            // ...preenchimento que cresce conforme combustivel/sinal.
             var fill = new GameObject("Fill", typeof(RectTransform));
             fill.transform.SetParent(go.transform, false);
             RectStretch(fill.GetComponent<RectTransform>());
+            fill.GetComponent<RectTransform>().offsetMin = new Vector2(5f, 5f);
+            fill.GetComponent<RectTransform>().offsetMax = new Vector2(-5f, -5f);
             var fillImg = fill.AddComponent<Image>();
             fillImg.type = Image.Type.Filled;
             fillImg.fillMethod = Image.FillMethod.Horizontal;
             fillImg.fillOrigin = 0;
             fillImg.color = fillColor;
+            fillImg.raycastTarget = false;
+
+            // Porcentagem DENTRO da barra (por cima do preenchimento).
+            var percent = new GameObject("PercentLabel", typeof(RectTransform));
+            percent.transform.SetParent(go.transform, false);
+            RectStretch(percent.GetComponent<RectTransform>());
+            var percentText = percent.AddComponent<Text>();
+            percentText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            percentText.fontSize = 15;
+            percentText.fontStyle = FontStyle.Bold;
+            percentText.alignment = TextAnchor.MiddleCenter;
+            percentText.color = Color.white;
+            percentText.raycastTarget = false;
 
             var slider = go.AddComponent<Slider>();
             slider.fillRect = fill.GetComponent<RectTransform>();
-            slider.targetGraphic = bgImg;
+            slider.targetGraphic = borderImg;
             slider.minValue = 0f;
             slider.maxValue = 100f;
 
@@ -562,8 +611,8 @@ namespace Lumen.EditorTools
 
             var root = new GameObject("BackgroundDecor");
 
-            // So decoracao distante e nao-interativa (o Netuno "de verdade",
-            // alcancavel, e criado separadamente em EnsureNetunoPhase).
+            // So decoracao distante e nao-interativa (os planetas "de verdade",
+            // alcancaveis, sao criados separadamente em EnsureAllPlanetRoute).
             // O Sol e empurrado para longe: Netuno gigante ocupava a posicao antiga.
             InstantiateDecor("Sun.prefab", new Vector3(0f, 180f, 950f), root.transform, addRotation: false);
             InstantiateDecor("Nebula_00.prefab", new Vector3(-220f, 40f, 180f), root.transform, addRotation: false);
@@ -677,15 +726,118 @@ namespace Lumen.EditorTools
             return null;
         }
 
-        private static void EnsureNetunoPhase()
+        private static void EnsureAllPlanetRoute()
         {
             EnsureFolder("Assets/_Project", "Data");
             EnsureFolder(DataFolder, "Quizzes");
             EnsureFolder(DataFolder, "Phases");
 
-            var quiz = EnsureNetunoQuiz();
-            var phase = EnsureNetunoPhaseData(quiz);
-            EnsureNetunoPlanet(phase);
+            // 1) Dados (quiz + fase) de cada planeta da rota.
+            var quizNetuno = EnsureQuizAsset("Netuno_Quiz.asset",
+                "Netuno tem os ventos mais fortes do Sistema Solar, apesar de estar tao longe do Sol. " +
+                "Qual e a velocidade aproximada desses ventos?",
+                new[] { "Cerca de 2.100 km/h", "Cerca de 100 km/h", "Cerca de 500 km/h" }, 0,
+                "Isso mesmo! Os ventos de Netuno chegam a ate 2.100 km/h - os mais rapidos ja registrados em qualquer planeta.",
+                "Nao e bem isso. Pense em algo bem mais extremo - os mais rapidos do Sistema Solar.");
+
+            var quizUrano = EnsureQuizAsset("Urano_Quiz.asset",
+                "Urano e o unico planeta que gira bem 'deitado', com o eixo quase no plano da orbita. " +
+                "Qual e o efeito disso no planeta?",
+                new[] { "Estacoes que duram cerca de 21 anos cada", "Ele nao tem estacoes", "Ele gira super rapido" }, 0,
+                "Isso mesmo! Cada polo de Urano passa mais de 20 anos de Sol e mais de 20 anos de escuridao por vez.",
+                "Nao - o eixo inclinado de Urano cria estacoes absurdamente longas, de mais de 20 anos.");
+
+            var quizSaturno = EnsureQuizAsset("Saturno_Quiz.asset",
+                "O que forma os aneis de Saturno?",
+                new[] { "Milhoes de fragmentos de gelo e rocha", "Gas comprimido pelo vento", "Poeira de meteoros em queda" }, 0,
+                "Exato! Os aneis sao formados por bilhoes de fragmentos de gelo e rocha orbitando o planeta.",
+                "Os aneis nao sao solidos nem gasosos - pense em algo bem fragmentado rodando em orbita.");
+
+            var quizJupiter = EnsureQuizAsset("Jupiter_Quiz.asset",
+                "Que fenomeno aparece na superficie de Jupiter ha seculos?",
+                new[] { "A Grande Mancha Vermelha, uma tempestade maior que a Terra",
+                        "Um vulcao gigante",
+                        "Um oceano de lava" }, 0,
+                "Correto! A Grande Mancha Vermelha e uma tempestade colossal observada ha mais de 300 anos, maior que a Terra.",
+                "Quase - repare na mancha enorme que gira no hemisferio sul do gigante gasoso.");
+
+            var quizMarte = EnsureQuizAsset("Marte_Quiz.asset",
+                "Por que Marte tem uma cor avermelhada?",
+                new[] { "Oxido de ferro (ferrugem) na superficie", "Pedras vulcanicas quentes", "Gelo refletindo o ceu" }, 0,
+                "Perfeito! O solo de Marte e rico em oxido de ferro, que da ao planeta o tom ferrugem.",
+                "Nao e calor - e a composicao quimica do solo que da essa cor a Marte.");
+
+            var quizTerra = EnsureQuizAsset("Terra_Quiz.asset",
+                "O que torna a Terra unica no Sistema Solar, ate hoje?",
+                new[] { "Agua liquida abundante e vida", "Tamanho recorde", "Maior numero de luas" }, 0,
+                "Exatamente! E o unico mundo conhecido com agua liquida em abundancia e vida.",
+                "Pense no que nenhum outro planeta conhecido tem de tao especial...");
+
+            var phaseNetuno = EnsurePlanetPhaseData("Netuno_Phase.asset", "Netuno", quizNetuno,
+                new[]
+                {
+                    "Aproximando de Netuno.",
+                    "Netuno e o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.",
+                    "Mas nao deixe o frio enganar: os ventos aqui sao os mais violentos de todo o Sistema Solar.",
+                }, 30f);
+
+            var phaseUrano = EnsurePlanetPhaseData("Urano_Phase.asset", "Urano", quizUrano,
+                new[]
+                {
+                    "Aproximando de Urano.",
+                    "Urano gira de lado, como se rolasse por sua orbita.",
+                    "Com isso, os polos passam decadas expostos ao Sol e depois a escuridao.",
+                }, 30f);
+
+            var phaseSaturno = EnsurePlanetPhaseData("Saturno_Phase.asset", "Saturno", quizSaturno,
+                new[]
+                {
+                    "Aproximando de Saturno.",
+                    "O gigante dos aneis: bilhoes de fragmentos de gelo e rocha.",
+                    "Voce esta passando pelo planeta mais fotogenico do Sistema Solar.",
+                }, 30f);
+
+            var phaseJupiter = EnsurePlanetPhaseData("Jupiter_Phase.asset", "Jupiter", quizJupiter,
+                new[]
+                {
+                    "Aproximando de Jupiter.",
+                    "O maior planeta de todos - sua Grande Mancha Vermelha e uma tempestade maior que a Terra.",
+                    "Nao ha superficie solida: e um gigante gasoso.",
+                }, 30f);
+
+            var phaseMarte = EnsurePlanetPhaseData("Marte_Phase.asset", "Marte", quizMarte,
+                new[]
+                {
+                    "Aproximando de Marte.",
+                    "O planeta vermelho, coberto por oxido de ferro.",
+                    "Foi aqui que rovers ja exploraram a superficie.",
+                }, 30f);
+
+            // Destino final: nao da fragmento (nextPlanet null encerra a missao).
+            var phaseTerra = EnsurePlanetPhaseData("Terra_Phase.asset", "Terra", quizTerra,
+                new[]
+                {
+                    "Aproximando da Terra.",
+                    "Depois de coletar conhecimento planeta a planeta, o retorno esta quase completo.",
+                    "LUMEN, prepare-se para concluir o ultimo quiz e voltar para casa.",
+                }, 0f);
+
+            // 2) Planetas em rota ZIGUE-ZAGUE (x: +1100 -> -1900 -> +600 -> -200),
+            //    nada de linha reta ate a Terra: o jogador e guiado planeta a planeta.
+            var netuno = EnsurePlanet("Neptune.prefab", "Netuno_Encounter", NetunoPosition, phaseNetuno, 0);
+            var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  new Vector3(1100f, 30f, 1150f), phaseUrano, 1);
+            var saturno = EnsurePlanet("Saturn.prefab", "Saturno_Encounter", new Vector3(0f, 50f, 1750f), phaseSaturno, 2);
+            var jupiter = EnsurePlanet("Jupiter.prefab", "Jupiter_Encounter", new Vector3(-1900f, 80f, 2350f), phaseJupiter, 3);
+            var marte  = EnsurePlanet("Mars.prefab",   "Marte_Encounter",   new Vector3(600f, 40f, 3000f), phaseMarte, 4);
+            var terra  = EnsurePlanet("Earth.prefab",  "Terra_Encounter",   new Vector3(-200f, 20f, 3600f), phaseTerra, 5);
+
+            // 3) Encadeia a rota: ao terminar um quiz, a seta aponta para o proximo.
+            PlanetApproachTrigger[] route = { netuno, urano, saturno, jupiter, marte, terra };
+            for (int i = 0; i < route.Length - 1; i++)
+            {
+                if (route[i] == null || route[i + 1] == null) continue;
+                route[i].SetNextPlanet(route[i + 1].transform);
+            }
         }
 
         private static void EnsureFolder(string parent, string newFolderName)
@@ -695,79 +847,85 @@ namespace Lumen.EditorTools
             AssetDatabase.CreateFolder(parent, newFolderName);
         }
 
-        private static QuizQuestionData EnsureNetunoQuiz()
+        private static QuizQuestionData EnsureQuizAsset(string fileName, string question, string[] options,
+            int correctIndex, string correctFeedback, string incorrectFeedback)
         {
-            string path = $"{DataFolder}/Quizzes/Netuno_Quiz.asset";
+            string path = $"{DataFolder}/Quizzes/{fileName}";
             var existing = AssetDatabase.LoadAssetAtPath<QuizQuestionData>(path);
             if (existing != null) return existing;
 
             var quiz = ScriptableObject.CreateInstance<QuizQuestionData>();
-            quiz.Question = "Netuno tem os ventos mais fortes do Sistema Solar, apesar de estar tao longe do Sol. " +
-                             "Qual e a velocidade aproximada desses ventos?";
-            quiz.Options = new[]
-            {
-                "Cerca de 2.100 km/h",
-                "Cerca de 100 km/h",
-                "Cerca de 500 km/h",
-            };
-            quiz.CorrectIndex = 0;
-            quiz.CorrectFeedback = "Isso mesmo! Os ventos de Netuno chegam a ate 2.100 km/h - os mais rapidos ja registrados em qualquer planeta.";
-            quiz.IncorrectFeedback = "Nao e bem isso. Pense em algo bem mais extremo - os mais rapidos do Sistema Solar.";
+            quiz.Question = question;
+            quiz.Options = options;
+            quiz.CorrectIndex = correctIndex;
+            quiz.CorrectFeedback = correctFeedback;
+            quiz.IncorrectFeedback = incorrectFeedback;
 
             AssetDatabase.CreateAsset(quiz, path);
             return quiz;
         }
 
-        private static PhaseData EnsureNetunoPhaseData(QuizQuestionData quiz)
+        private static PhaseData EnsurePlanetPhaseData(string fileName, string planetName, QuizQuestionData quiz,
+            string[] narration, float reward)
         {
-            string path = $"{DataFolder}/Phases/Netuno_Phase.asset";
+            string path = $"{DataFolder}/Phases/{fileName}";
             var existing = AssetDatabase.LoadAssetAtPath<PhaseData>(path);
             if (existing != null) return existing;
 
             var phase = ScriptableObject.CreateInstance<PhaseData>();
-            phase.PlanetName = "Netuno";
-            phase.NarrationLines = new[]
-            {
-                "Aproximando de Netuno.",
-                "Netuno e o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.",
-                "Mas nao deixe o frio enganar: os ventos aqui sao os mais violentos de todo o Sistema Solar.",
-            };
+            phase.PlanetName = planetName;
+            phase.NarrationLines = narration;
             phase.Quiz = quiz;
-            phase.FragmentEnergyReward = 30f;
+            phase.FragmentEnergyReward = reward;
 
             AssetDatabase.CreateAsset(phase, path);
             return phase;
         }
 
-        private static void EnsureNetunoPlanet(PhaseData phase)
+        private static PlanetApproachTrigger EnsurePlanet(string prefabFileName, string objectName, Vector3 position,
+            PhaseData phase, int routeIndex)
         {
-            var existing = GameObject.Find("Netuno_Encounter");
+            var existing = GameObject.Find(objectName);
             if (existing != null)
             {
-                // Cena montada antes desta versao: reposiciona e reajusta o
-                // tamanho proporcional. O trigger e o PhaseData ja existem.
-                existing.transform.position = NetunoPosition;
-                ApplyPlanetScale(existing, "Neptune.prefab");
+                // Cena montada antes desta versao: reposiciona e reajusta o tamanho,
+                // e liga/atualiza o trigger da rota se ainda nao existir.
+                existing.transform.position = position;
+                ApplyPlanetScale(existing, prefabFileName);
                 NormalizeEncounterTrigger(existing);
-                return;
+
+                var trig = existing.GetComponent<PlanetApproachTrigger>();
+                if (trig == null)
+                {
+                    if (existing.GetComponent<Collider>() == null)
+                    {
+                        var col = existing.AddComponent<SphereCollider>();
+                        col.isTrigger = true;
+                    }
+                    trig = existing.AddComponent<PlanetApproachTrigger>();
+                }
+
+                trig.SetPhase(phase);
+                trig.SetRouteIndex(routeIndex);
+                return trig;
             }
 
-            string prefabPath = $"{PlanetsPackPath}/Prefabs/Neptune.prefab";
+            string prefabPath = $"{PlanetsPackPath}/Prefabs/{prefabFileName}";
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             if (prefab == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao encontrei '{prefabPath}'. A Fase 2 nao foi montada - " +
+                Debug.LogWarning($"[LUMEN] Nao encontrei '{prefabPath}'. A fase de {objectName} nao foi montada - " +
                                   "confirme se o pacote de planetas esta importado e rode o menu de novo.");
-                return;
+                return null;
             }
 
             var instanceObj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            if (instanceObj == null) return;
+            if (instanceObj == null) return null;
 
-            instanceObj.name = "Netuno_Encounter";
-            instanceObj.transform.position = NetunoPosition; // longe: planeta gigante ocupa o horizonte
+            instanceObj.name = objectName;
+            instanceObj.transform.position = position;
 
-            ApplyPlanetScale(instanceObj, "Neptune.prefab");
+            ApplyPlanetScale(instanceObj, prefabFileName);
             instanceObj.AddComponent<SlowRotator>();
 
             foreach (var col in instanceObj.GetComponentsInChildren<Collider>())
@@ -782,6 +940,8 @@ namespace Lumen.EditorTools
 
             var trigger = instanceObj.AddComponent<PlanetApproachTrigger>();
             trigger.SetPhase(phase);
+            trigger.SetRouteIndex(routeIndex);
+            return trigger;
         }
 
         /// <summary>Aplica a escala proporcional ao planeta, se houver na tabela.</summary>

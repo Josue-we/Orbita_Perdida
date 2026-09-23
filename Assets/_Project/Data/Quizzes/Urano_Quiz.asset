@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Urano_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Urano e o unico planeta que gira bem 'deitado', com o eixo quase no plano
+    da orbita. Qual e o efeito disso no planeta?
+  Options:
+  - Estacoes que duram cerca de 21 anos cada
+  - Ele nao tem estacoes
+  - Ele gira super rapido
+  CorrectIndex: 0
+  CorrectFeedback: Isso mesmo! Cada polo de Urano passa mais de 20 anos de Sol e
+    mais de 20 anos de escuridao por vez.
+  IncorrectFeedback: Nao - o eixo inclinado de Urano cria estacoes absurdamente longas,
+    de mais de 20 anos.

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Saturno_Quiz
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: O que forma os aneis de Saturno?
+  Options:
+  - Milhoes de fragmentos de gelo e rocha
+  - Gas comprimido pelo vento
+  - Poeira de meteoros em queda
+  CorrectIndex: 0
+  CorrectFeedback: Exato! Os aneis sao formados por bilhoes de fragmentos de gelo
+    e rocha orbitando o planeta.
+  IncorrectFeedback: Os aneis nao sao solidos nem gasosos - pense em algo bem fragmentado
+    rodando em orbita.
