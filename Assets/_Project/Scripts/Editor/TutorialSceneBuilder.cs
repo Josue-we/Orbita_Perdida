@@ -46,6 +46,12 @@ namespace Lumen.EditorTools
         private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 120f);
         private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 560f);
 
+        // --- Ajuste de jogo ---
+        // Os numeros de direcao e consumo vivem em Lumen.Core.GameTuning (fonte
+        // unica, em runtime). Aqui so reaplicamos neles apos EnsureLumen() para
+        // que o Inspector mostre os mesmos valores - os componentes tambem os
+        // reaplicam no Start, entao o jogo funciona sem rodar este menu.
+
         private static readonly System.Collections.Generic.Dictionary<string, float> PlanetScaleByPrefab =
             new System.Collections.Generic.Dictionary<string, float>
             {
@@ -79,7 +85,8 @@ namespace Lumen.EditorTools
             EnsureAllPlanetRoute();
 
             Debug.Log("[LUMEN] Cena montada. Pressione Play para testar. " +
-                      "Controles: WASD para mover, Space/Ctrl para subir e descer. " +
+                      "Controles: WASD para mover, Espaço/Ctrl para subir e descer, X para frear, " +
+                      "Shift para boost e R para resgate. " +
                       "Confira o Console para avisos de qualquer asset ou som faltando.");
         }
 
@@ -148,7 +155,19 @@ namespace Lumen.EditorTools
             // O mundo cresceu junto com a rota ate a Terra (3.600+): garante que o limite
             // de voo acumule o raio aberto novo mesmo se a instancia guardar o valor antigo.
             var lumenController = lumen.GetComponent<LumenController>();
-            if (lumenController != null) lumenController.SetOpenWorldRadius(4500f);
+            var energy = lumen.GetComponent<LumenEnergySystem>();
+
+            if (lumenController != null)
+            {
+                lumenController.SetOpenWorldRadius(GameTuning.OpenWorldRadius);
+                lumenController.ApplyMovementTuning(GameTuning.Acceleration, GameTuning.MaxSpeed,
+                    GameTuning.BoostSpeed, GameTuning.CoastDamping, GameTuning.BrakeDamping,
+                    GameTuning.RotationSmooth);
+            }
+
+            if (energy != null)
+                energy.Configure(GameTuning.MaxEnergy, GameTuning.ThrustDrainPerSecond,
+                    GameTuning.IdleDrainPerSecond);
 
             return lumen;
         }
@@ -217,7 +236,7 @@ namespace Lumen.EditorTools
             var beaconPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(beaconPath);
             if (beaconPrefab == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao encontrei '{beaconPath}' para o farol de saida do tutorial.");
+                Debug.LogWarning($"[LUMEN] Não encontrei '{beaconPath}' para o farol de saída do tutorial.");
                 return;
             }
 
@@ -373,7 +392,7 @@ namespace Lumen.EditorTools
 
         private static Text CreateEnergyLabel(Transform parent)
         {
-            return CreateBarLabel(parent, "EnergyLabel", "COMBUSTIVEL", new Color(1f, 0.8f, 0.3f));
+            return CreateBarLabel(parent, "EnergyLabel", "COMBUSTÍVEL", new Color(1f, 0.8f, 0.3f));
         }
 
         private static Text CreateBarLabel(Transform parent, string name, string content, Color color)
@@ -596,7 +615,7 @@ namespace Lumen.EditorTools
             var skyboxMat = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (skyboxMat == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao encontrei '{path}'. Confirme se o pacote " +
+                Debug.LogWarning($"[LUMEN] Não encontrei '{path}'. Confirme se o pacote " +
                                   "'Planets of the Solar System 3D' foi importado antes de rodar de novo.");
                 return;
             }
@@ -627,7 +646,7 @@ namespace Lumen.EditorTools
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao encontrei '{path}'. Pulei esse elemento de cenario.");
+                Debug.LogWarning($"[LUMEN] Não encontrei '{path}'. Pulei esse elemento de cenário.");
                 return;
             }
 
@@ -675,7 +694,7 @@ namespace Lumen.EditorTools
                        ?? AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guids[0]));
 
             manager.SetMusicClip(clip);
-            Debug.Log($"[LUMEN] Trilha atribuida automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+            Debug.Log($"[LUMEN] Trilha atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
         }
 
         private static void AutoAssignSfx(AudioManager manager)
@@ -683,7 +702,7 @@ namespace Lumen.EditorTools
             string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/_Project/Audio" });
             if (guids.Length == 0) return;
 
-            TryAssignSfx(manager.HasSelectSfx, manager.SetSelectSfx, guids, "Selecao",
+            TryAssignSfx(manager.HasSelectSfx, manager.SetSelectSfx, guids, "Seleção",
                 "select", "click", "hover", "beep", "seleciona");
             TryAssignSfx(manager.HasCorrectSfx, manager.SetCorrectSfx, guids, "Acerto",
                 "correct", "success", "confirm", "acerto", "certo");
@@ -701,13 +720,13 @@ namespace Lumen.EditorTools
             var clip = FindClipByKeywords(guids, keywords);
             if (clip == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao achei um som de '{label}' automaticamente. " +
+                Debug.LogWarning($"[LUMEN] Não achei um som de '{label}' automaticamente. " +
                                   "Arraste manualmente no AudioManager, ou renomeie o arquivo para conter '" + keywords[0] + "'.");
                 return;
             }
 
             setter(clip);
-            Debug.Log($"[LUMEN] Som de {label} atribuido automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+            Debug.Log($"[LUMEN] Som de {label} atribuído automaticamente: {AssetDatabase.GetAssetPath(clip)}");
         }
 
         private static AudioClip FindClipByKeywords(string[] guids, params string[] keywords)
@@ -734,92 +753,94 @@ namespace Lumen.EditorTools
 
             // 1) Dados (quiz + fase) de cada planeta da rota.
             var quizNetuno = EnsureQuizAsset("Netuno_Quiz.asset",
-                "Netuno tem os ventos mais fortes do Sistema Solar, apesar de estar tao longe do Sol. " +
-                "Qual e a velocidade aproximada desses ventos?",
+                "Netuno tem os ventos mais fortes do Sistema Solar, apesar de estar tão longe do Sol. " +
+                "Qual é a velocidade aproximada desses ventos?",
                 new[] { "Cerca de 2.100 km/h", "Cerca de 100 km/h", "Cerca de 500 km/h" }, 0,
-                "Isso mesmo! Os ventos de Netuno chegam a ate 2.100 km/h - os mais rapidos ja registrados em qualquer planeta.",
-                "Nao e bem isso. Pense em algo bem mais extremo - os mais rapidos do Sistema Solar.");
+                "Isso mesmo! Os ventos de Netuno chegam a 2.100 km/h — os mais rápidos já registrados em qualquer planeta.",
+                "Não é bem isso. Pense em algo bem mais extremo — os mais rápidos do Sistema Solar.");
 
             var quizUrano = EnsureQuizAsset("Urano_Quiz.asset",
-                "Urano e o unico planeta que gira bem 'deitado', com o eixo quase no plano da orbita. " +
-                "Qual e o efeito disso no planeta?",
-                new[] { "Estacoes que duram cerca de 21 anos cada", "Ele nao tem estacoes", "Ele gira super rapido" }, 0,
-                "Isso mesmo! Cada polo de Urano passa mais de 20 anos de Sol e mais de 20 anos de escuridao por vez.",
-                "Nao - o eixo inclinado de Urano cria estacoes absurdamente longas, de mais de 20 anos.");
+                "Urano é o único planeta que gira bem 'deitado', com o eixo quase no plano da órbita. " +
+                "Qual é o efeito disso no planeta?",
+                new[] { "Estações que duram cerca de 21 anos cada", "Ele não tem estações", "Ele gira super rápido" }, 0,
+                "Isso mesmo! Cada polo de Urano passa mais de 20 anos de Sol e mais de 20 anos de escuridão por vez.",
+                "Não — o eixo inclinado de Urano cria estações absurdamente longas, de mais de 20 anos.");
 
             var quizSaturno = EnsureQuizAsset("Saturno_Quiz.asset",
-                "O que forma os aneis de Saturno?",
-                new[] { "Milhoes de fragmentos de gelo e rocha", "Gas comprimido pelo vento", "Poeira de meteoros em queda" }, 0,
-                "Exato! Os aneis sao formados por bilhoes de fragmentos de gelo e rocha orbitando o planeta.",
-                "Os aneis nao sao solidos nem gasosos - pense em algo bem fragmentado rodando em orbita.");
+                "O que forma os anéis de Saturno?",
+                new[] { "Milhões de fragmentos de gelo e rocha", "Gás comprimido pelo vento", "Poeira de meteoros em queda" }, 0,
+                "Exato! Os anéis são formados por bilhões de fragmentos de gelo e rocha orbitando o planeta.",
+                "Os anéis não são sólidos nem gasosos — pense em algo bem fragmentado rodando em órbita.");
 
+            // O nome do ARQUIVO continua "Jupiter" (o path e o .meta nao mudam);
+            // so o nome exibido em tela e acentuado.
             var quizJupiter = EnsureQuizAsset("Jupiter_Quiz.asset",
-                "Que fenomeno aparece na superficie de Jupiter ha seculos?",
+                "Que fenômeno aparece na superfície de Júpiter há séculos?",
                 new[] { "A Grande Mancha Vermelha, uma tempestade maior que a Terra",
-                        "Um vulcao gigante",
+                        "Um vulcão gigante",
                         "Um oceano de lava" }, 0,
-                "Correto! A Grande Mancha Vermelha e uma tempestade colossal observada ha mais de 300 anos, maior que a Terra.",
-                "Quase - repare na mancha enorme que gira no hemisferio sul do gigante gasoso.");
+                "Correto! A Grande Mancha Vermelha é uma tempestade colossal observada há mais de 300 anos, maior que a Terra.",
+                "Quase — repare na mancha enorme que gira no hemisfério sul do gigante gasoso.");
 
             var quizMarte = EnsureQuizAsset("Marte_Quiz.asset",
                 "Por que Marte tem uma cor avermelhada?",
-                new[] { "Oxido de ferro (ferrugem) na superficie", "Pedras vulcanicas quentes", "Gelo refletindo o ceu" }, 0,
-                "Perfeito! O solo de Marte e rico em oxido de ferro, que da ao planeta o tom ferrugem.",
-                "Nao e calor - e a composicao quimica do solo que da essa cor a Marte.");
+                new[] { "Óxido de ferro (ferrugem) na superfície", "Pedras vulcânicas quentes", "Gelo refletindo o céu" }, 0,
+                "Perfeito! O solo de Marte é rico em óxido de ferro, que dá ao planeta o tom ferrugem.",
+                "Não é calor — é a composição química do solo que dá essa cor a Marte.");
 
             var quizTerra = EnsureQuizAsset("Terra_Quiz.asset",
-                "O que torna a Terra unica no Sistema Solar, ate hoje?",
-                new[] { "Agua liquida abundante e vida", "Tamanho recorde", "Maior numero de luas" }, 0,
-                "Exatamente! E o unico mundo conhecido com agua liquida em abundancia e vida.",
-                "Pense no que nenhum outro planeta conhecido tem de tao especial...");
+                "O que torna a Terra única no Sistema Solar, até hoje?",
+                new[] { "Água líquida abundante e vida", "Tamanho recorde", "Maior número de luas" }, 0,
+                "Exatamente! É o único mundo conhecido com água líquida em abundância e vida.",
+                "Pense no que nenhum outro planeta conhecido tem de tão especial...");
 
             var phaseNetuno = EnsurePlanetPhaseData("Netuno_Phase.asset", "Netuno", quizNetuno,
                 new[]
                 {
                     "Aproximando de Netuno.",
-                    "Netuno e o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.",
-                    "Mas nao deixe o frio enganar: os ventos aqui sao os mais violentos de todo o Sistema Solar.",
-                }, 30f);
+                    "Netuno é o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.",
+                    "Mas não deixe o frio enganar: os ventos aqui são os mais violentos de todo o Sistema Solar.",
+                }, 75f);
 
             var phaseUrano = EnsurePlanetPhaseData("Urano_Phase.asset", "Urano", quizUrano,
                 new[]
                 {
                     "Aproximando de Urano.",
-                    "Urano gira de lado, como se rolasse por sua orbita.",
-                    "Com isso, os polos passam decadas expostos ao Sol e depois a escuridao.",
-                }, 30f);
+                    "Urano gira de lado, como se rolasse por sua órbita.",
+                    "Com isso, os polos passam décadas expostos ao Sol e depois à escuridão.",
+                }, 75f);
 
             var phaseSaturno = EnsurePlanetPhaseData("Saturno_Phase.asset", "Saturno", quizSaturno,
                 new[]
                 {
                     "Aproximando de Saturno.",
-                    "O gigante dos aneis: bilhoes de fragmentos de gelo e rocha.",
-                    "Voce esta passando pelo planeta mais fotogenico do Sistema Solar.",
-                }, 30f);
+                    "O gigante dos anéis: bilhões de fragmentos de gelo e rocha.",
+                    "Você está passando pelo planeta mais fotogênico do Sistema Solar.",
+                }, 75f);
 
-            var phaseJupiter = EnsurePlanetPhaseData("Jupiter_Phase.asset", "Jupiter", quizJupiter,
+            var phaseJupiter = EnsurePlanetPhaseData("Jupiter_Phase.asset", "Júpiter", quizJupiter,
                 new[]
                 {
-                    "Aproximando de Jupiter.",
-                    "O maior planeta de todos - sua Grande Mancha Vermelha e uma tempestade maior que a Terra.",
-                    "Nao ha superficie solida: e um gigante gasoso.",
-                }, 30f);
+                    "Aproximando de Júpiter.",
+                    "O maior planeta de todos — sua Grande Mancha Vermelha é uma tempestade maior que a Terra.",
+                    "Não há superfície sólida: é um gigante gasoso.",
+                }, 75f);
 
             var phaseMarte = EnsurePlanetPhaseData("Marte_Phase.asset", "Marte", quizMarte,
                 new[]
                 {
                     "Aproximando de Marte.",
-                    "O planeta vermelho, coberto por oxido de ferro.",
-                    "Foi aqui que rovers ja exploraram a superficie.",
-                }, 30f);
+                    "O planeta vermelho, coberto por óxido de ferro.",
+                    "Foi aqui que rovers já exploraram a superfície.",
+                }, 75f);
 
             // Destino final: nao da fragmento (nextPlanet null encerra a missao).
             var phaseTerra = EnsurePlanetPhaseData("Terra_Phase.asset", "Terra", quizTerra,
                 new[]
                 {
                     "Aproximando da Terra.",
-                    "Depois de coletar conhecimento planeta a planeta, o retorno esta quase completo.",
-                    "LUMEN, prepare-se para concluir o ultimo quiz e voltar para casa.",
+                    "Depois de coletar conhecimento planeta a planeta, o retorno está quase completo.",
+                    "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);
 
             // 2) Planetas em rota ZIGUE-ZAGUE (x: +1100 -> -1900 -> +600 -> -200),
@@ -914,8 +935,8 @@ namespace Lumen.EditorTools
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             if (prefab == null)
             {
-                Debug.LogWarning($"[LUMEN] Nao encontrei '{prefabPath}'. A fase de {objectName} nao foi montada - " +
-                                  "confirme se o pacote de planetas esta importado e rode o menu de novo.");
+                Debug.LogWarning($"[LUMEN] Não encontrei '{prefabPath}'. A fase de {objectName} não foi montada — " +
+                                  "confirme se o pacote de planetas está importado e rode o menu de novo.");
                 return null;
             }
 

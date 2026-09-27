@@ -107,3 +107,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Packs pagos da Unity Asset Store.
+# A licenca do Asset Store proibe redistribuir os arquivos, entao eles nao
+# entram no repositorio: compre/importe o pack na sua maquina (ver README).
+/[Aa]ssets/Planets of the Solar System 3D/
+/[Aa]ssets/LowpolySpaceshipPack/

@@ -32,7 +32,7 @@ namespace Lumen.Gameplay.Challenges
 
             if (_data == null)
             {
-                Debug.LogWarning($"[LUMEN] {phase.PlanetName} nao tem QuizQuestionData atribuido em PhaseData.");
+                Debug.LogWarning($"[LUMEN] {phase.PlanetName} não tem QuizQuestionData atribuído em PhaseData.");
                 onCompleted?.Invoke();
                 return;
             }
@@ -41,6 +41,9 @@ namespace Lumen.Gameplay.Challenges
             questionText.text = _data.Question;
             feedbackText.text = "";
             SetupOptions();
+
+            // Quiz em tela: a trilha sonora abaixa (e volta ao fechar).
+            EventBus.RaiseQuizOpened();
         }
 
         private void SetupOptions()
@@ -82,6 +85,10 @@ namespace Lumen.Gameplay.Challenges
         {
             yield return new WaitForSeconds(delay);
             panelRoot.SetActive(false);
+
+            // Tela do quiz fechada: a trilha volta ao volume que tinha antes.
+            EventBus.RaiseQuizClosed();
+
             _onCompleted?.Invoke();
         }
 

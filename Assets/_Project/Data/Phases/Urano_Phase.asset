@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Urano
   NarrationLines:
   - Aproximando de Urano.
-  - Urano gira de lado, como se rolasse por sua orbita.
-  - Com isso, os polos passam decadas expostos ao Sol e depois a escuridao.
+  - Urano gira de lado, como se rolasse por sua órbita.
+  - Com isso, os polos passam décadas expostos ao Sol e depois à escuridão.
   Quiz: {fileID: 11400000, guid: f96599ba550a9ac4e951d1909cc75b83, type: 2}
-  FragmentEnergyReward: 30
+  FragmentEnergyReward: 75

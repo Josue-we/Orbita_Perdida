@@ -26,8 +26,8 @@ namespace Lumen.Narrative
         private string[] lines =
         {
             "SINAL PERDIDO...",
-            "Uma tempestade solar atingiu o satelite LUMEN e interrompeu a conexao com a Terra.",
-            "Arrastado para longe da rota original, LUMEN ficou sem combustivel no meio do caminho de volta.",
+            "Uma tempestade solar atingiu o satélite LUMEN e interrompeu a conexão com a Terra.",
+            "Arrastado para longe da rota original, LUMEN ficou sem combustível no meio do caminho de volta.",
             "BASE TERRA: sinal fraco reestabelecido. Orientando os primeiros passos...",
             "Reative os propulsores e prossiga.",
         };

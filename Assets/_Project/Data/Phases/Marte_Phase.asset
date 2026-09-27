@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Marte
   NarrationLines:
   - Aproximando de Marte.
-  - O planeta vermelho, coberto por oxido de ferro.
-  - Foi aqui que rovers ja exploraram a superficie.
+  - O planeta vermelho, coberto por óxido de ferro.
+  - Foi aqui que rovers já exploraram a superfície.
   Quiz: {fileID: 11400000, guid: f46b85c83d9b13543b023229eb8c9874, type: 2}
-  FragmentEnergyReward: 30
+  FragmentEnergyReward: 75

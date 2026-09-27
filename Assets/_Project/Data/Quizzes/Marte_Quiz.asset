@@ -14,11 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
   Question: Por que Marte tem uma cor avermelhada?
   Options:
-  - Oxido de ferro (ferrugem) na superficie
-  - Pedras vulcanicas quentes
-  - Gelo refletindo o ceu
+  - Óxido de ferro (ferrugem) na superfície
+  - Pedras vulcânicas quentes
+  - Gelo refletindo o céu
   CorrectIndex: 0
-  CorrectFeedback: Perfeito! O solo de Marte e rico em oxido de ferro, que da ao
-    planeta o tom ferrugem.
-  IncorrectFeedback: Nao e calor - e a composicao quimica do solo que da essa cor
-    a Marte.
+  CorrectFeedback: Perfeito! O solo de Marte é rico em óxido de ferro, que dá ao planeta o tom ferrugem.
+  IncorrectFeedback: Não é calor — é a composição química do solo que dá essa cor a Marte.

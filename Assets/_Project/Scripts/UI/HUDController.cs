@@ -6,20 +6,26 @@ using Lumen.Gameplay;
 namespace Lumen.UI
 {
     /// <summary>
-    /// HUD principal: barra de COMBUSTIVEL (drena enquanto o LUMEN se move),
-    /// barra de SINAL com a Terra (sobe conforme fragmentos sao coletados),
-    /// objetivo atual, contador de fragmentos e a seta de navegacao.
-    /// O painel de quiz e a legenda da NOVA sao componentes separados.
+    /// HUD principal: barra de COMBUSTÍVEL (drena com os propulsores acesos e
+    /// zera = LUMEN parado + resgate), barra de SINAL com a Terra (sobe conforme
+    /// fragmentos sao coletados), objetivo atual, contador de fragmentos e a
+    /// seta de navegacao. O painel de quiz e a legenda da NOVA sao componentes
+    /// separados.
     /// </summary>
     public class HUDController : MonoBehaviour
     {
-        private const int TotalFragments = 5; // Netuno, Urano, Saturno, Jupiter, Marte
+        private const int TotalFragments = 5; // Netuno, Urano, Saturno, Júpiter, Marte
+
+        // Abaixo disso o combustivel vira um aviso no objetivo, para o jogador
+        // saber que a nave esta prestes a parar (e nao entender do nada).
+        private const float LowFuelThreshold = 0.25f;
+        private const float RescueBannerSeconds = 4f;
 
         [Header("Barras (canto superior esquerdo)")]
         [SerializeField] private Slider signalBar;   // sinal com a Terra
         [SerializeField] private Slider energyBar;   // combustivel
         [SerializeField] private Text signalLabel;   // legenda acima: "SINAL"
-        [SerializeField] private Text energyLabel;   // legenda acima: "COMBUSTIVEL"
+        [SerializeField] private Text energyLabel;   // legenda acima: "COMBUSTÍVEL"
         [SerializeField] private Text signalPercentText; // % DENTRO da barra
         [SerializeField] private Text energyPercentText; // % DENTRO da barra
 
@@ -27,7 +33,7 @@ namespace Lumen.UI
         [SerializeField] private Text objectiveLabel;
         [SerializeField] private Text fragmentsLabel;
 
-        [Header("Navegacao")]
+        [Header("Navegação")]
         [SerializeField] private Text navArrow;
 
         // Preenchimento direto do fillAmount: o Slider do Unity pode nao renderizar
@@ -39,6 +45,12 @@ namespace Lumen.UI
         private int _fragmentsCollected;
         private bool _tutorialDone;
         private float _tutorialCompleteBannerTimer;
+        private float _rescueBannerTimer;
+
+        // Combustivel atual: o HUD deduz sozinho os avisos de tanque baixo/zerado
+        // a partir do que o LumenEnergySystem ja publica no EventBus.
+        private float _energy;
+        private float _maxEnergy;
 
         private Transform _navigationTarget;
         private string _targetName;
@@ -56,6 +68,7 @@ namespace Lumen.UI
             EventBus.OnTutorialCompleted += HandleTutorialCompleted;
             EventBus.OnNavigateTo += HandleNavigateTo;
             EventBus.OnMissionComplete += HandleMissionComplete;
+            EventBus.OnRescued += HandleRescued;
         }
 
         private void OnDisable()
@@ -65,15 +78,17 @@ namespace Lumen.UI
             EventBus.OnTutorialCompleted -= HandleTutorialCompleted;
             EventBus.OnNavigateTo -= HandleNavigateTo;
             EventBus.OnMissionComplete -= HandleMissionComplete;
+            EventBus.OnRescued -= HandleRescued;
         }
 
         private void Start()
         {
             if (signalLabel != null) signalLabel.text = "SINAL";
-            if (energyLabel != null) energyLabel.text = "COMBUSTIVEL";
+            if (energyLabel != null) energyLabel.text = "COMBUSTÍVEL";
             if (objectiveLabel != null)
-                objectiveLabel.text = "Use WASD para mover. Space / Ctrl para subir e descer. " +
-                                      "Siga PARA A FRENTE ate o FAROL ao longe para concluir o tutorial.";
+                objectiveLabel.text = "Use WASD para mover. Espaço / Ctrl para subir e descer. " +
+                                      "X para frear. " +
+                                      "Siga PARA A FRENTE até o FAROL ao longe para concluir o tutorial.";
 
             // Referencia espacial do 1o planeta: usada para o sinal crescer
             // conforme a nave se aproxima (barra dinamica), e para o prompt do tutorial.
@@ -101,6 +116,14 @@ namespace Lumen.UI
             // cresce conforme a nave se aproxima do planeta, entao nunca fica parada.
             UpdateSignalBar();
 
+            // Combustivel zerado: o LUMEN esta parado esperando o resgate, e isso
+            // tem prioridade sobre qualquer outro texto da tela.
+            if (IsOutOfFuel)
+            {
+                ShowOutOfFuelPrompt();
+                return;
+            }
+
             // Durante o tutorial, mostra a distancia ate o farol de saida, deixando
             // muito claro que ele termina ao chegar la (nao e infinito).
             if (!_tutorialDone)
@@ -117,7 +140,25 @@ namespace Lumen.UI
                 return;
             }
 
+            // Mesma coisa com o aviso de resgate, para o jogador ver o que houve
+            // antes da seta voltar a apontar o proximo destino.
+            if (_rescueBannerTimer > 0f)
+            {
+                _rescueBannerTimer -= Time.deltaTime;
+                return;
+            }
+
             UpdateNavigationArrow();
+        }
+
+        private bool IsOutOfFuel => _maxEnergy > 0f && _energy <= 0f;
+
+        private void ShowOutOfFuelPrompt()
+        {
+            if (objectiveLabel == null) return;
+
+            objectiveLabel.text = "COMBUSTÍVEL ESGOTADO! O LUMEN ficou sem propelentes.\n" +
+                                  $"Pressione {LumenController.RescueKey} para voltar ao último planeta e seguir para o próximo.";
         }
 
         private void UpdateTutorialPrompt()
@@ -131,19 +172,43 @@ namespace Lumen.UI
             if (_cam == null) return;
 
             float dist = Vector3.Distance(_cam.transform.position, _gateTransform.position);
-            objectiveLabel.text = "TUTORIAL\n" +
-                                  "MOVIMENTO: WASD | SUBIR/DESCER: SPACE / CTRL\n" +
-                                  $"Atravesse o FAROL a frente ({dist:F0} m) para concluir.";
+            SetObjective("TUTORIAL\n" +
+                         "MOVIMENTO: WASD | SUBIR/DESCER: ESPAÇO / CTRL\n" +
+                         $"Atravesse o FAROL à frente ({dist:F0} m) para concluir.");
+        }
+
+        /// <summary>
+        /// Escreve o objetivo e pendura o aviso de combustivel baixo, para o
+        /// jogador nunca ser pego de surpresa pela parada obrigatoria.
+        /// </summary>
+        private void SetObjective(string line)
+        {
+            if (objectiveLabel == null) return;
+
+            if (_maxEnergy > 0f && _energy / _maxEnergy <= LowFuelThreshold)
+                line += $"\nCOMBUSTÍVEL BAIXO ({Mathf.RoundToInt(_energy / _maxEnergy * 100f)}%) - cada fragmento coletado reabastece.";
+
+            objectiveLabel.text = line;
         }
 
         private void HandleEnergyChanged(float current, float max)
         {
+            _energy = current;
+            _maxEnergy = max;
+
             if (energyBar == null) return;
             energyBar.maxValue = max;
             energyBar.value = current;
             SetFill(_energyFill, current, max);
             if (energyPercentText != null)
                 energyPercentText.text = $"{Mathf.RoundToInt(current)}%";
+        }
+
+        private void HandleRescued(string place)
+        {
+            _rescueBannerTimer = RescueBannerSeconds;
+            if (objectiveLabel != null)
+                objectiveLabel.text = $"RESGATE! O LUMEN voltou para {place} com o tanque cheio.";
         }
 
         private void HandleFragmentCollected(string planetName)
@@ -156,8 +221,7 @@ namespace Lumen.UI
             _navigationActive = false;
             _navigationTarget = null;
             if (navArrow != null) navArrow.gameObject.SetActive(false);
-            if (objectiveLabel != null)
-                objectiveLabel.text = $"Fragmento de {planetName} coletado! Energia restaurada.";
+            SetObjective($"Fragmento de {planetName} coletado! Energia restaurada.");
         }
 
         private void HandleTutorialCompleted()
@@ -169,7 +233,7 @@ namespace Lumen.UI
             // sao liberados juntos (o LUMEN escuta o mesmo evento).
             _tutorialCompleteBannerTimer = 4f;
             if (objectiveLabel != null)
-                objectiveLabel.text = "TUTORIAL CONCLUIDO! Boost liberado (Shift). Siga a seta.";
+                objectiveLabel.text = "TUTORIAL CONCLUÍDO! Boost liberado (Shift). Siga a seta.";
 
             _navigationActive = true;
 
@@ -177,8 +241,7 @@ namespace Lumen.UI
             var start = GetRouteStart();
             if (start == null)
             {
-                if (objectiveLabel != null)
-                    objectiveLabel.text = "Tutorial concluido! Siga para o primeiro planeta.";
+                SetObjective("Tutorial concluído! Siga para o primeiro planeta.");
                 return;
             }
 
@@ -213,8 +276,7 @@ namespace Lumen.UI
             _navigationActive = false;
             _navigationTarget = null;
             if (navArrow != null) navArrow.gameObject.SetActive(false);
-            if (objectiveLabel != null)
-                objectiveLabel.text = "MISSAO CONCLUIDA! Bem-vinda de volta a Terra, LUMEN.";
+            SetObjective("MISSÃO CONCLUÍDA! Bem-vindo de volta à Terra, LUMEN.");
         }
 
         /// <summary>
@@ -276,8 +338,7 @@ namespace Lumen.UI
 
             Vector3 toTarget = _navigationTarget.position - _cam.transform.position;
 
-            if (objectiveLabel != null)
-                objectiveLabel.text = $"Siga ate {_targetName} ({toTarget.magnitude:F0} m)";
+            SetObjective($"Siga até {_targetName} ({toTarget.magnitude:F0} m)");
 
             if (Vector3.Dot(toTarget, _cam.transform.forward) < 0f)
             {

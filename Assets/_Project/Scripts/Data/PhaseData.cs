@@ -20,6 +20,9 @@ namespace Lumen.Data
 
         public QuizQuestionData Quiz;
 
-        public float FragmentEnergyReward = 30f;
+        // 75 = o pior trecho da rota custa ~68, entao o fragmento sempre devolve
+        // o suficiente para dar a proxima perna com folga, mesmo se o jogador
+        // chegou raspando no planeta anterior.
+        public float FragmentEnergyReward = 75f;
     }
 }

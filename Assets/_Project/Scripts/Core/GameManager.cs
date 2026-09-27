@@ -22,6 +22,15 @@ namespace Lumen.Core
         public static GameManager Instance { get; private set; }
         public GameState CurrentState { get; private set; } = GameState.Boot;
 
+        /// <summary>
+        /// Ultimo ponto seguro do LUMEN: o planeta cujo quiz ja foi respondido
+        /// (ou o inicio da rota). Se o combustivel zerar no meio de um trecho,
+        /// e para onde o resgate traz a nave de volta.
+        /// </summary>
+        public Vector3 RescuePosition { get; private set; }
+        public string RescueLabel { get; private set; } = "a base";
+        public bool HasRescuePoint { get; private set; }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -42,6 +51,13 @@ namespace Lumen.Core
         public void SetState(GameState newState)
         {
             CurrentState = newState;
+        }
+
+        public void SetRescuePoint(Vector3 position, string label)
+        {
+            RescuePosition = position;
+            RescueLabel = label;
+            HasRescuePoint = true;
         }
     }
 }

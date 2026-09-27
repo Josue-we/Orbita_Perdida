@@ -18,6 +18,9 @@ namespace Lumen.Core
         public static event Action<string> OnFragmentCollected; // nome do planeta
         public static event Action<Transform, string> OnNavigateTo; // (proximo alvo, nome)
         public static event Action OnMissionComplete;
+        public static event Action<string> OnRescued; // local para onde a nave voltou
+        public static event Action OnQuizOpened;
+        public static event Action OnQuizClosed;
 
         /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
         public static bool TutorialCompleted { get; private set; }
@@ -63,6 +66,21 @@ namespace Lumen.Core
         public static void RaiseMissionComplete()
         {
             OnMissionComplete?.Invoke();
+        }
+
+        public static void RaiseRescued(string place)
+        {
+            OnRescued?.Invoke(place);
+        }
+
+        public static void RaiseQuizOpened()
+        {
+            OnQuizOpened?.Invoke();
+        }
+
+        public static void RaiseQuizClosed()
+        {
+            OnQuizClosed?.Invoke();
         }
     }
 }

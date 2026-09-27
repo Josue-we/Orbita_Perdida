@@ -92,7 +92,7 @@ namespace Lumen.Gameplay
 
             if (phase == null)
             {
-                Debug.LogWarning($"[LUMEN] {name} nao tem PhaseData atribuido - ignorando encontro.");
+                Debug.LogWarning($"[LUMEN] {name} não tem PhaseData atribuído - ignorando encontro.");
                 return;
             }
 
@@ -136,6 +136,10 @@ namespace Lumen.Gameplay
             EventBus.RaiseFragmentCollected(phase.PlanetName);
             if (energy != null) energy.Refill(phase.FragmentEnergyReward);
 
+            // O planeta recem-resolvido vira o novo ponto de resgate: se o
+            // combustivel zerar no proximo trecho, o LUMEN volta para aqui.
+            GameManager.Instance.SetRescuePoint(GetRescuePosition(), phase.PlanetName);
+
             GameManager.Instance.SetState(GameState.Playing);
 
             // Seta de navegacao aponta para o proximo planeta da rota.
@@ -144,6 +148,15 @@ namespace Lumen.Gameplay
                 : null;
             if (nextTrigger != null)
                 EventBus.RaiseNavigateTo(nextPlanet, nextTrigger.PhaseName);
+        }
+
+        /// <summary>
+        /// Ponto de resgate logo acima do planeta e FORA da zona de encontro, para
+        /// a nave resgatada comecar o proximo trecho limpa (sem reentrar no quiz).
+        /// </summary>
+        public Vector3 GetRescuePosition()
+        {
+            return transform.position + Vector3.up * (WorldTriggerRadius + 40f);
         }
 
         /// <summary>Usado pelo TutorialSceneBuilder para atribuir o PhaseData sem reflection.</summary>

@@ -15,9 +15,7 @@ MonoBehaviour:
   PlanetName: Netuno
   NarrationLines:
   - Aproximando de Netuno.
-  - Netuno e o planeta mais distante do Sol, com temperaturas perto de -220 graus
-    Celsius.
-  - 'Mas nao deixe o frio enganar: os ventos aqui sao os mais violentos de todo o
-    Sistema Solar.'
+  - Netuno é o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.
+  - 'Mas não deixe o frio enganar: os ventos aqui são os mais violentos de todo o Sistema Solar.'
   Quiz: {fileID: 11400000, guid: 9c81091f2854f5940a1e4d5368513f25, type: 2}
-  FragmentEnergyReward: 30
+  FragmentEnergyReward: 75

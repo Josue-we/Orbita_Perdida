@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Terra
   NarrationLines:
   - Aproximando da Terra.
-  - Depois de coletar conhecimento planeta a planeta, o retorno esta quase completo.
-  - LUMEN, prepare-se para concluir o ultimo quiz e voltar para casa.
+  - Depois de coletar conhecimento planeta a planeta, o retorno está quase completo.
+  - LUMEN, prepare-se para concluir o último quiz e voltar para casa.
   Quiz: {fileID: 11400000, guid: 0219701e3869f864cba14a0f0bb7a97e, type: 2}
   FragmentEnergyReward: 0

@@ -12,13 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
   m_Name: Saturno_Quiz
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
-  Question: O que forma os aneis de Saturno?
+  Question: O que forma os anéis de Saturno?
   Options:
-  - Milhoes de fragmentos de gelo e rocha
-  - Gas comprimido pelo vento
+  - Milhões de fragmentos de gelo e rocha
+  - Gás comprimido pelo vento
   - Poeira de meteoros em queda
   CorrectIndex: 0
-  CorrectFeedback: Exato! Os aneis sao formados por bilhoes de fragmentos de gelo
-    e rocha orbitando o planeta.
-  IncorrectFeedback: Os aneis nao sao solidos nem gasosos - pense em algo bem fragmentado
-    rodando em orbita.
+  CorrectFeedback: Exato! Os anéis são formados por bilhões de fragmentos de gelo e rocha orbitando o planeta.
+  IncorrectFeedback: Os anéis não são sólidos nem gasosos — pense em algo bem fragmentado rodando em órbita.

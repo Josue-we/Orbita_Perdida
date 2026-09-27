@@ -21,6 +21,6 @@ namespace Lumen.Data
         public string CorrectFeedback = "Isso mesmo!";
 
         [TextArea(1, 3)]
-        public string IncorrectFeedback = "Nao e bem isso. Tente de novo.";
+        public string IncorrectFeedback = "Não é bem isso. Tente de novo.";
     }
 }

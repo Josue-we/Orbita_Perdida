@@ -1,24 +1,41 @@
 using UnityEngine;
 using Lumen.Core;
+using Lumen.Cameras;
 
 namespace Lumen.Gameplay
 {
     /// <summary>
-    /// Movimento do LUMEN: aceleracao, desaceleracao e rotacao suave em direcao
-    /// ao movimento. Controle por teclado (WASD + Space/Ctrl + Shift p/ boost).
-    /// O limite de voo e suave (empurra de volta em vez de travar de vez) e e
-    /// expandido ao concluir o tutorial. Sem fisica de Rigidbody: movimento
-    /// cinematico leve, previsivel de depurar.
+    /// Movimento do LUMEN em estilo arcade com intencao: aceleracao forte,
+    /// freio ao soltar o acelerador e freio de manobra. A nave aponta para onde
+    /// esta indo, como um aviao - e isso nao vira a tela, porque a camera tem
+    /// orientacao fixa no mundo (ver CameraFollow). Sem fisica de Rigidbody.
+    /// Teclado: WASD move, Space/Ctrl sobe/desce, X freia, Shift e boost.
+    /// O limite de voo e suave (empurra de volta em vez de travar de vez) e
+    /// expandido ao concluir o tutorial.
+    ///
+    /// Quando o combustivel acaba a nave PARA no lugar e o resgate assume:
+    /// a tecla RescueKey devolve o LUMEN ao ultimo ponto seguro com o tanque
+    /// cheio, para a partida nunca travar no meio do nada.
     /// </summary>
     [RequireComponent(typeof(LumenEnergySystem))]
     public class LumenController : MonoBehaviour
     {
+        /// <summary>Tecla de resgate. O HUD cita essa tecla na mensagem de alerta.</summary>
+        public const KeyCode RescueKey = KeyCode.R;
+
+        /// <summary>Freio de manobra. Derruba a velocidade na hora, sem gastar combustivel.</summary>
+        public const KeyCode BrakeKey = KeyCode.X;
+
         [Header("Movimento")]
-        [SerializeField] private float acceleration = 12f;
-        [SerializeField] private float maxSpeed = 8f;
-        [SerializeField] private float boostSpeed = 14f;
-        [SerializeField] private float damping = 4f;
-        [SerializeField] private float rotationSpeed = 6f;
+        [SerializeField] private float acceleration = GameTuning.Acceleration;
+        [SerializeField] private float maxSpeed = GameTuning.MaxSpeed;
+        [SerializeField] private float boostSpeed = GameTuning.BoostSpeed;
+        [Tooltip("Freio ao soltar o acelerador. Alto = a nave para na hora em vez de patinar.")]
+        [SerializeField] private float coastDamping = GameTuning.CoastDamping;
+        [Tooltip("Freio da tecla X: derruba a velocidade na hora, para manobrar em espaço apertado.")]
+        [SerializeField] private float brakeDamping = GameTuning.BrakeDamping;
+        [Tooltip("Quão rápido a nave gira para apontar o rumo. Não afeta a câmera.")]
+        [SerializeField] private float rotationSmooth = GameTuning.RotationSmooth;
 
         [Header("Limites de voo")]
         [SerializeField] private Vector3 boundsCenter = Vector3.zero;
@@ -37,14 +54,28 @@ namespace Lumen.Gameplay
         {
             if (_loggedInputWarning) return;
             _loggedInputWarning = true;
-            Debug.LogError("[LUMEN] O 'Input Manager (Old)' esta desabilitado, por isso o LUMEN nao responde. " +
-                           "Va em Edit > Project Settings > Player > Active Input Handling e escolha " +
+            Debug.LogError("[LUMEN] O 'Input Manager (Old)' está desabilitado, por isso o LUMEN não responde. " +
+                           "Vá em Edit > Project Settings > Player > Active Input Handling e escolha " +
                            "'Input Manager (Old)' ou 'Both', depois reinicie o Editor.");
         }
 #else
         private void Awake()
         {
             _energy = GetComponent<LumenEnergySystem>();
+
+            // O tuning oficial sempre vence o valor salvo no Inspector - e o que
+            // faz o ajuste valer em qualquer cena, montada antes ou depois dele.
+            ApplyMovementTuning(GameTuning.Acceleration, GameTuning.MaxSpeed, GameTuning.BoostSpeed,
+                GameTuning.CoastDamping, GameTuning.BrakeDamping, GameTuning.RotationSmooth);
+            openWorldRadius = GameTuning.OpenWorldRadius;
+        }
+
+        private void Start()
+        {
+            // Enquanto nenhum planeta for concluido, o resgate devolve a nave
+            // para onde ela comecou - assim nunca existe um estado sem saida.
+            if (GameManager.Instance != null && !GameManager.Instance.HasRescuePoint)
+                GameManager.Instance.SetRescuePoint(transform.position, "o início da rota");
         }
 
         private void OnEnable()
@@ -78,32 +109,89 @@ namespace Lumen.Gameplay
                 boundsRadius = Mathf.Max(boundsRadius, openWorldRadius);
             }
 
-            Vector3 input = ReadInput();
-            bool isThrusting = input.sqrMagnitude > 0.0001f;
+            // Sem combustivel a nave nao se locomove: ela para e o resgate assume.
+            if (_energy.IsEmpty)
+            {
+                HandleOutOfFuel();
+                return;
+            }
 
-            if (isThrusting)
-            {
+            Vector3 input = ReadMoveInput();
+            bool isThrusting = input.sqrMagnitude > 0.0001f;
+            bool isBraking = Input.GetKey(BrakeKey);
+
+            if (isThrusting && !isBraking)
                 _velocity += input.normalized * acceleration * Time.deltaTime;
-                float cap = (_boostEnabled && Input.GetKey(KeyCode.LeftShift)) ? boostSpeed : maxSpeed;
-                _velocity = Vector3.ClampMagnitude(_velocity, cap);
-            }
-            else
-            {
-                _velocity = Vector3.Lerp(_velocity, Vector3.zero, damping * Time.deltaTime);
-            }
+
+            // Freio independente de FPS: soltar o acelerador agora PARA a nave
+            // (antes ela deslizava e a manobra ficava "engrudada").
+            float damping = isBraking ? brakeDamping : (isThrusting ? 0f : coastDamping);
+            if (damping > 0f)
+                _velocity = Vector3.Lerp(_velocity, Vector3.zero, 1f - Mathf.Exp(-damping * Time.deltaTime));
+
+            float cap = (_boostEnabled && Input.GetKey(KeyCode.LeftShift)) ? boostSpeed : maxSpeed;
+            _velocity = Vector3.ClampMagnitude(_velocity, cap);
 
             transform.position = ClampToBounds(transform.position + _velocity * Time.deltaTime);
+            AlignToTravel();
 
-            if (_velocity.sqrMagnitude > 0.01f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(_velocity.normalized, Vector3.up);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            }
-
-            _energy.Tick(Time.deltaTime, isThrusting);
+            // Frear nao queima combustivel: e o contrario de acelerar.
+            _energy.Tick(Time.deltaTime, isThrusting && !isBraking);
         }
 
-        private Vector3 ReadInput()
+        /// <summary>
+        /// Combustivel zerado: zera a velocidade (a nave fica parada) e espera o
+        /// jogador apertar RescueKey. Nao existe temporizador - voltar ou nao e
+        /// decisao dele, e o unico jeito de destravar a nave.
+        /// </summary>
+        private void HandleOutOfFuel()
+        {
+            _velocity = Vector3.zero;
+            if (Input.GetKeyDown(RescueKey)) Rescue();
+        }
+
+        /// <summary>
+        /// Devolve o LUMEN ao ultimo ponto seguro (planeta ja resolvido ou o
+        /// inicio da rota) com o tanque cheio. Nao perde fragmentos nem progresso.
+        /// </summary>
+        private void Rescue()
+        {
+            _velocity = Vector3.zero;
+
+            string place = "a base";
+            if (GameManager.Instance != null && GameManager.Instance.HasRescuePoint)
+            {
+                place = GameManager.Instance.RescueLabel;
+                transform.position = GameManager.Instance.RescuePosition;
+            }
+
+            _energy.RefillToFull();
+
+            // A camera estava la longe: sem isso o SmoothDamp atravessa o mapa
+            // inteiro em camera lenta.
+            var follow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
+            if (follow != null) follow.SnapToTarget();
+
+            EventBus.RaiseRescued(place);
+        }
+
+        /// <summary>
+        /// A nave aponta para onde esta indo - como um aviao. Isso ja existiu e
+        /// o jogador achava estranho, mas a causa nao era a nave: era a camera,
+        /// que girava junto com ela. Agora a camera tem orientacao fixa, e como
+        /// o freio zera a velocidade ao soltar a tecla, a nave ja parou antes de
+        /// alinhar - nao existe mais o "vira sozinho" no meio do caminho.
+        /// </summary>
+        private void AlignToTravel()
+        {
+            if (_velocity.sqrMagnitude < 0.04f) return;
+
+            Quaternion target = Quaternion.LookRotation(_velocity.normalized, Vector3.up);
+            float t = 1f - Mathf.Exp(-rotationSmooth * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, target, t);
+        }
+
+        private Vector3 ReadMoveInput()
         {
             float x = Input.GetAxisRaw("Horizontal"); // A / D
             float z = Input.GetAxisRaw("Vertical");    // W / S
@@ -146,6 +234,24 @@ namespace Lumen.Gameplay
         public void SetOpenWorldRadius(float radius)
         {
             openWorldRadius = radius;
+        }
+
+        /// <summary>
+        /// Aplica os numeros de movimento. O construtor de cena chama isso TODA
+        /// vez que roda, inclusive em cena ja montada: como os campos sao
+        /// [SerializeField], o valor fica gravado no componente e mudar apenas
+        /// o default do script nao atualiza uma cena existente - foi assim que
+        /// o ajuste de combustivel "nao funcionou" antes.
+        /// </summary>
+        public void ApplyMovementTuning(float newAcceleration, float newMaxSpeed, float newBoostSpeed,
+            float newCoastDamping, float newBrakeDamping, float newRotationSmooth)
+        {
+            acceleration = newAcceleration;
+            maxSpeed = newMaxSpeed;
+            boostSpeed = newBoostSpeed;
+            coastDamping = newCoastDamping;
+            brakeDamping = newBrakeDamping;
+            rotationSmooth = newRotationSmooth;
         }
     }
 }

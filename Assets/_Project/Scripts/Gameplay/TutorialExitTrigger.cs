@@ -77,7 +77,7 @@ namespace Lumen.Gameplay
             if (beacon != null) Destroy(beacon.gameObject);
 
             EventBus.RaiseTutorialCompleted();
-            Debug.Log("[LUMEN] Tutorial concluido - o jogo comecou. Proxima parada: Netuno.");
+            Debug.Log("[LUMEN] Tutorial concluído - o jogo começou. Próxima parada: Netuno.");
         }
     }
 }

@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Saturno
   NarrationLines:
   - Aproximando de Saturno.
-  - 'O gigante dos aneis: bilhoes de fragmentos de gelo e rocha.'
-  - Voce esta passando pelo planeta mais fotogenico do Sistema Solar.
+  - 'O gigante dos anéis: bilhões de fragmentos de gelo e rocha.'
+  - Você está passando pelo planeta mais fotogênico do Sistema Solar.
   Quiz: {fileID: 11400000, guid: 3971845d493885a4098ef01a68947d91, type: 2}
-  FragmentEnergyReward: 30
+  FragmentEnergyReward: 75

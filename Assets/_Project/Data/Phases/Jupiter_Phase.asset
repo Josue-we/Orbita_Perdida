@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3704698eebfe19a46869d73a9720a44f, type: 3}
   m_Name: Jupiter_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
-  PlanetName: Jupiter
+  PlanetName: Júpiter
   NarrationLines:
-  - Aproximando de Jupiter.
-  - O maior planeta de todos - sua Grande Mancha Vermelha e uma tempestade maior
-    que a Terra.
-  - 'Nao ha superficie solida: e um gigante gasoso.'
+  - Aproximando de Júpiter.
+  - O maior planeta de todos — sua Grande Mancha Vermelha é uma tempestade maior que a Terra.
+  - 'Não há superfície sólida: é um gigante gasoso.'
   Quiz: {fileID: 11400000, guid: 816a6561fbe0ce84ab16a5e04e2e38a6, type: 2}
-  FragmentEnergyReward: 30
+  FragmentEnergyReward: 75
