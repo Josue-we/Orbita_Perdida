@@ -112,4 +112,6 @@ InitTestScene*.unity*
 # A licenca do Asset Store proibe redistribuir os arquivos, entao eles nao
 # entram no repositorio: compre/importe o pack na sua maquina (ver README).
 /[Aa]ssets/Planets of the Solar System 3D/
+/[Aa]ssets/Planets of the Solar System 3D.meta
 /[Aa]ssets/LowpolySpaceshipPack/
+/[Aa]ssets/LowpolySpaceshipPack.meta
