@@ -5,17 +5,13 @@ using Lumen.Cameras;
 namespace Lumen.Gameplay
 {
     /// <summary>
-    /// Movimento do LUMEN em estilo arcade com intencao: aceleracao forte,
-    /// freio ao soltar o acelerador e freio de manobra. A nave aponta para onde
-    /// esta indo, como um aviao - e isso nao vira a tela, porque a camera tem
-    /// orientacao fixa no mundo (ver CameraFollow). Sem fisica de Rigidbody.
-    /// Teclado: WASD move, Space/Ctrl sobe/desce, X freia, Shift e boost.
-    /// O limite de voo e suave (empurra de volta em vez de travar de vez) e
-    /// expandido ao concluir o tutorial.
+    /// Movimento do LUMEN em terceira pessoa: A/D GIRAM a nave (o rumo fica
+    /// guardado), W/S avancam/recuam para onde ela aponta, Space/Ctrl sobem/descem,
+    /// X freia, Shift e boost. Sem fisica de Rigidbody.
     ///
-    /// Quando o combustivel acaba a nave PARA no lugar e o resgate assume:
-    /// a tecla RescueKey devolve o LUMEN ao ultimo ponto seguro com o tanque
-    /// cheio, para a partida nunca travar no meio do nada.
+    /// Quando o combustivel acaba a nave PARA no lugar e a tecla RescueKey devolve
+    /// o LUMEN ao ultimo ponto seguro com o tanque cheio, para a partida nunca
+    /// travar no meio do nada.
     /// </summary>
     [RequireComponent(typeof(LumenEnergySystem))]
     public class LumenController : MonoBehaviour
@@ -34,15 +30,23 @@ namespace Lumen.Gameplay
         [SerializeField] private float coastDamping = GameTuning.CoastDamping;
         [Tooltip("Freio da tecla X: derruba a velocidade na hora, para manobrar em espaço apertado.")]
         [SerializeField] private float brakeDamping = GameTuning.BrakeDamping;
-        [Tooltip("Quão rápido a nave gira para apontar o rumo. Não afeta a câmera.")]
+        [Tooltip("Suavização da curva (A/D). Maior = responde mais rápido.")]
         [SerializeField] private float rotationSmooth = GameTuning.RotationSmooth;
+        [Tooltip("Graus por segundo ao segurar A/D.")]
+        [SerializeField] private float turnSpeed = GameTuning.TurnSpeed;
 
         [Header("Limites de voo")]
         [SerializeField] private Vector3 boundsCenter = Vector3.zero;
         [SerializeField] private float boundsRadius = 45f;
         [SerializeField] private float openWorldRadius = 4500f;
 
-        private Vector3 _velocity;
+        // Velocidade guardada em dois eixos: "para frente" (relativo ao rumo) e
+        // vertical. Assim, ao girar, a nave segue o novo rumo sem derrapar.
+        private float _forwardSpeed;
+        private float _verticalSpeed;
+        private float _yaw;
+        private float _turnInput;
+
         private LumenEnergySystem _energy;
         private bool _boundsOpened;
         private bool _boostEnabled;
@@ -63,15 +67,17 @@ namespace Lumen.Gameplay
         {
             _energy = GetComponent<LumenEnergySystem>();
 
-            // O tuning oficial sempre vence o valor salvo no Inspector - e o que
-            // faz o ajuste valer em qualquer cena, montada antes ou depois dele.
+            // O tuning oficial sempre vence o valor salvo no Inspector.
             ApplyMovementTuning(GameTuning.Acceleration, GameTuning.MaxSpeed, GameTuning.BoostSpeed,
                 GameTuning.CoastDamping, GameTuning.BrakeDamping, GameTuning.RotationSmooth);
+            turnSpeed = GameTuning.TurnSpeed;
             openWorldRadius = GameTuning.OpenWorldRadius;
         }
 
         private void Start()
         {
+            _yaw = transform.eulerAngles.y;
+
             // Enquanto nenhum planeta for concluido, o resgate devolve a nave
             // para onde ela comecou - assim nunca existe um estado sem saida.
             if (GameManager.Instance != null && !GameManager.Instance.HasRescuePoint)
@@ -88,8 +94,7 @@ namespace Lumen.Gameplay
             EventBus.OnTutorialCompleted -= HandleTutorialCompleted;
         }
 
-        // Boost (Shift) so libera depois do tutorial terminar - mais uma marca
-        // clara de que o jogo "continuou" de fato.
+        // Boost (Shift) so libera depois do tutorial terminar.
         private void HandleTutorialCompleted()
         {
             _boostEnabled = true;
@@ -98,11 +103,9 @@ namespace Lumen.Gameplay
         private void Update()
         {
             if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Playing)
-                return; // controle travado durante a intro, um desafio ou uma futura pausa
+                return; // controle travado no menu, intro, desafio ou pausa
 
-            // Assim que a intro termina, o mapa inteiro fica aberto. O gatilho de
-            // saida do tutorial so marca o "tutorial concluido" (seta de navegacao) -
-            // ele NAO e mais necessario para liberar o caminho ate o planeta.
+            // Assim que a intro termina, o mapa inteiro fica aberto.
             if (!_boundsOpened)
             {
                 _boundsOpened = true;
@@ -116,47 +119,70 @@ namespace Lumen.Gameplay
                 return;
             }
 
-            Vector3 input = ReadMoveInput();
-            bool isThrusting = input.sqrMagnitude > 0.0001f;
+            float dt = Time.deltaTime;
+
+            // --- Giro (A/D): o rumo escolhido fica guardado ---
+            float turnRaw = Input.GetAxisRaw("Horizontal");
+            _turnInput = Mathf.Lerp(_turnInput, turnRaw, 1f - Mathf.Exp(-rotationSmooth * dt));
+            _yaw += _turnInput * turnSpeed * dt;
+            transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
+
+            // --- Propulsao (W/S = frente/tras, Space/Ctrl = sobe/desce) ---
+            float thrustZ = Input.GetAxisRaw("Vertical");
+            float thrustY = 0f;
+            if (Input.GetKey(KeyCode.Space)) thrustY += 1f;
+            if (Input.GetKey(KeyCode.LeftControl)) thrustY -= 1f;
+
             bool isBraking = Input.GetKey(BrakeKey);
+            bool isThrusting = Mathf.Abs(thrustZ) > 0.01f || Mathf.Abs(thrustY) > 0.01f;
 
-            if (isThrusting && !isBraking)
-                _velocity += input.normalized * acceleration * Time.deltaTime;
+            if (!isBraking)
+            {
+                _forwardSpeed += thrustZ * acceleration * dt;
+                _verticalSpeed += thrustY * acceleration * dt;
+            }
 
-            // Freio independente de FPS: soltar o acelerador agora PARA a nave
-            // (antes ela deslizava e a manobra ficava "engrudada").
-            float damping = isBraking ? brakeDamping : (isThrusting ? 0f : coastDamping);
-            if (damping > 0f)
-                _velocity = Vector3.Lerp(_velocity, Vector3.zero, 1f - Mathf.Exp(-damping * Time.deltaTime));
+            // Freio por eixo, independente de FPS: soltar a tecla PARA a nave.
+            float dampZ = isBraking ? brakeDamping : (Mathf.Abs(thrustZ) > 0.01f ? 0f : coastDamping);
+            float dampY = isBraking ? brakeDamping : (Mathf.Abs(thrustY) > 0.01f ? 0f : coastDamping);
+            _forwardSpeed *= Mathf.Exp(-dampZ * dt);
+            _verticalSpeed *= Mathf.Exp(-dampY * dt);
 
             float cap = (_boostEnabled && Input.GetKey(KeyCode.LeftShift)) ? boostSpeed : maxSpeed;
-            _velocity = Vector3.ClampMagnitude(_velocity, cap);
+            float mag = new Vector2(_forwardSpeed, _verticalSpeed).magnitude;
+            if (mag > cap)
+            {
+                float k = cap / mag;
+                _forwardSpeed *= k;
+                _verticalSpeed *= k;
+            }
 
-            transform.position = ClampToBounds(transform.position + _velocity * Time.deltaTime);
-            AlignToTravel();
+            Vector3 velocity = transform.forward * _forwardSpeed + Vector3.up * _verticalSpeed;
+            transform.position = ClampToBounds(transform.position + velocity * dt);
 
-            // Frear nao queima combustivel: e o contrario de acelerar.
-            _energy.Tick(Time.deltaTime, isThrusting && !isBraking);
+            // Frear e girar nao queimam combustivel.
+            _energy.Tick(dt, isThrusting && !isBraking);
         }
 
         /// <summary>
-        /// Combustivel zerado: zera a velocidade (a nave fica parada) e espera o
-        /// jogador apertar RescueKey. Nao existe temporizador - voltar ou nao e
-        /// decisao dele, e o unico jeito de destravar a nave.
+        /// Combustivel zerado: a nave fica parada esperando o jogador apertar
+        /// RescueKey. Nao existe temporizador.
         /// </summary>
         private void HandleOutOfFuel()
         {
-            _velocity = Vector3.zero;
+            _forwardSpeed = 0f;
+            _verticalSpeed = 0f;
             if (Input.GetKeyDown(RescueKey)) Rescue();
         }
 
         /// <summary>
-        /// Devolve o LUMEN ao ultimo ponto seguro (planeta ja resolvido ou o
-        /// inicio da rota) com o tanque cheio. Nao perde fragmentos nem progresso.
+        /// Devolve o LUMEN ao ultimo ponto seguro com o tanque cheio.
+        /// Nao perde fragmentos nem progresso.
         /// </summary>
         private void Rescue()
         {
-            _velocity = Vector3.zero;
+            _forwardSpeed = 0f;
+            _verticalSpeed = 0f;
 
             string place = "a base";
             if (GameManager.Instance != null && GameManager.Instance.HasRescuePoint)
@@ -167,40 +193,11 @@ namespace Lumen.Gameplay
 
             _energy.RefillToFull();
 
-            // A camera estava la longe: sem isso o SmoothDamp atravessa o mapa
-            // inteiro em camera lenta.
+            // A camera estava la longe: sem isso o SmoothDamp atravessa o mapa.
             var follow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
             if (follow != null) follow.SnapToTarget();
 
             EventBus.RaiseRescued(place);
-        }
-
-        /// <summary>
-        /// A nave aponta para onde esta indo - como um aviao. Isso ja existiu e
-        /// o jogador achava estranho, mas a causa nao era a nave: era a camera,
-        /// que girava junto com ela. Agora a camera tem orientacao fixa, e como
-        /// o freio zera a velocidade ao soltar a tecla, a nave ja parou antes de
-        /// alinhar - nao existe mais o "vira sozinho" no meio do caminho.
-        /// </summary>
-        private void AlignToTravel()
-        {
-            if (_velocity.sqrMagnitude < 0.04f) return;
-
-            Quaternion target = Quaternion.LookRotation(_velocity.normalized, Vector3.up);
-            float t = 1f - Mathf.Exp(-rotationSmooth * Time.deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, target, t);
-        }
-
-        private Vector3 ReadMoveInput()
-        {
-            float x = Input.GetAxisRaw("Horizontal"); // A / D
-            float z = Input.GetAxisRaw("Vertical");    // W / S
-            float y = 0f;
-
-            if (Input.GetKey(KeyCode.Space)) y += 1f;
-            if (Input.GetKey(KeyCode.LeftControl)) y -= 1f;
-
-            return new Vector3(x, y, z);
         }
 
         private Vector3 ClampToBounds(Vector3 position)
@@ -209,12 +206,10 @@ namespace Lumen.Gameplay
             float mag = offset.magnitude;
             if (mag <= boundsRadius) return position;
 
-            // Limite suave: segura na borda mantendo o componente de velocidade
-            // que aponta de volta para dentro, para nunca travar o jogador.
-            Vector3 inward = -offset.normalized;
-            position = boundsCenter + offset.normalized * boundsRadius;
-            _velocity = Vector3.Project(_velocity, inward);
-            return position;
+            // Borda do mapa: segura a nave ali (o jogador pode girar e voltar).
+            _forwardSpeed = 0f;
+            _verticalSpeed = 0f;
+            return boundsCenter + offset.normalized * boundsRadius;
         }
 #endif
 
@@ -224,7 +219,7 @@ namespace Lumen.Gameplay
             Gizmos.DrawWireSphere(boundsCenter, boundsRadius);
         }
 
-        /// <summary>Aumenta o raio de voo permitido - usado ao sair do tutorial e liberar o resto do mapa.</summary>
+        /// <summary>Aumenta o raio de voo permitido - usado ao sair do tutorial.</summary>
         public void ExpandBounds(float newRadius)
         {
             boundsRadius = Mathf.Max(boundsRadius, newRadius);
@@ -236,13 +231,7 @@ namespace Lumen.Gameplay
             openWorldRadius = radius;
         }
 
-        /// <summary>
-        /// Aplica os numeros de movimento. O construtor de cena chama isso TODA
-        /// vez que roda, inclusive em cena ja montada: como os campos sao
-        /// [SerializeField], o valor fica gravado no componente e mudar apenas
-        /// o default do script nao atualiza uma cena existente - foi assim que
-        /// o ajuste de combustivel "nao funcionou" antes.
-        /// </summary>
+        /// <summary>Aplica os numeros de movimento (chamado tambem pelo construtor de cena).</summary>
         public void ApplyMovementTuning(float newAcceleration, float newMaxSpeed, float newBoostSpeed,
             float newCoastDamping, float newBrakeDamping, float newRotationSmooth)
         {

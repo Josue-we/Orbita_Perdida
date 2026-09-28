@@ -86,7 +86,7 @@ namespace Lumen.UI
             if (signalLabel != null) signalLabel.text = "SINAL";
             if (energyLabel != null) energyLabel.text = "COMBUSTÍVEL";
             if (objectiveLabel != null)
-                objectiveLabel.text = "Use WASD para mover. Espaço / Ctrl para subir e descer. " +
+                objectiveLabel.text = "W/S para avançar e recuar, A/D para girar. Espaço / Ctrl para subir e descer. " +
                                       "X para frear. " +
                                       "Siga PARA A FRENTE até o FAROL ao longe para concluir o tutorial.";
 
@@ -173,7 +173,7 @@ namespace Lumen.UI
 
             float dist = Vector3.Distance(_cam.transform.position, _gateTransform.position);
             SetObjective("TUTORIAL\n" +
-                         "MOVIMENTO: WASD | SUBIR/DESCER: ESPAÇO / CTRL\n" +
+                         "AVANÇAR: W/S | GIRAR: A/D | SUBIR/DESCER: ESPAÇO / CTRL\n" +
                          $"Atravesse o FAROL à frente ({dist:F0} m) para concluir.");
         }
 

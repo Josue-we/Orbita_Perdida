@@ -4,56 +4,53 @@ using Lumen.Core;
 namespace Lumen.Cameras
 {
     /// <summary>
-    /// Camera de perseguicao com ORIENTACAO FIXA no mundo (sem Cinemachine).
-    ///
-    /// O detalhe que importa: a camera nao gira junto com a nave. A versao
-    /// anterior usava target.TransformDirection(offset), ou seja, o offset era
-    /// a "tras da nave" - entao qualquer giro da nave girava a tela inteira e o
-    /// mundo parecia voltar para o centro sozinho a cada manobra lateral.
-    ///
-    /// Agora a camera fica num deslocamento fixo do mundo, olhando a nave de cima
-    /// e de tras. Resultado: o horizonte nunca gira, W sobe na tela, D vai para a
-    /// direita, e a nave pode apontar para onde quiser sem mexer na visao.
+    /// Camera de perseguicao ATRAS da nave. Segue apenas o giro horizontal (yaw)
+    /// da nave, entao o horizonte nunca inclina, e olha um ponto a frente dela.
     /// </summary>
     public class CameraFollow : MonoBehaviour
     {
         [SerializeField] private Transform target;
-        [SerializeField] private Vector3 offset = new Vector3(0f, 32f, -28f);
+        [SerializeField] private Vector3 offset = new Vector3(0f, 4f, -12f);
+        [SerializeField] private Vector3 lookAhead = new Vector3(0f, 1f, 12f);
         [SerializeField] private float positionSmoothTime = 0.16f;
+        [SerializeField] private float rotationSmooth = 6f;
 
         private Vector3 _velocity;
-        private Quaternion _framing = Quaternion.identity;
 
         private void Awake()
         {
             // Tuning oficial sempre vence o valor salvo no Inspector (ver GameTuning).
             offset = GameTuning.CameraOffset;
+            lookAhead = GameTuning.CameraLookAhead;
             positionSmoothTime = GameTuning.CameraPositionSmooth;
-            _framing = BuildFraming();
-            transform.rotation = _framing;
+            rotationSmooth = GameTuning.CameraRotationSmooth;
         }
 
         private void Start()
         {
-            // Primeira tela sem o "vovo" do SmoothDamp atravessando o mapa.
             SnapToTarget();
-        }
-
-        /// <summary>Rotacao fixa: o angulo de cima combinando com o offset.</summary>
-        private Quaternion BuildFraming()
-        {
-            float horizontal = Mathf.Max(0.001f, new Vector2(offset.x, offset.z).magnitude);
-            float pitch = Mathf.Atan2(offset.y, horizontal) * Mathf.Rad2Deg;
-            return Quaternion.Euler(pitch, 0f, 0f);
         }
 
         private void LateUpdate()
         {
             if (target == null) return;
 
-            Vector3 desiredPosition = target.position + offset;
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref _velocity, positionSmoothTime);
-            transform.rotation = _framing;
+            Quaternion yaw = Quaternion.Euler(0f, target.eulerAngles.y, 0f);
+            Vector3 desiredPosition = target.position + yaw * offset;
+
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition,
+                ref _velocity, positionSmoothTime);
+
+            float t = 1f - Mathf.Exp(-rotationSmooth * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation,
+                DesiredRotation(yaw, desiredPosition), t);
+        }
+
+        private Quaternion DesiredRotation(Quaternion yaw, Vector3 fromPosition)
+        {
+            Vector3 lookPoint = target.position + yaw * lookAhead;
+            Vector3 dir = lookPoint - fromPosition;
+            return dir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(dir, Vector3.up) : transform.rotation;
         }
 
         public void SetTarget(Transform newTarget)
@@ -61,16 +58,15 @@ namespace Lumen.Cameras
             target = newTarget;
         }
 
-        /// <summary>
-        /// Cola a camera no alvo na hora. Usado no resgate: sem isso o SmoothDamp
-        /// atravessa o mapa inteiro em camera lenta quando a nave e teletransportada.
-        /// </summary>
+        /// <summary>Cola a camera atras da nave na hora (inicio e resgate).</summary>
         public void SnapToTarget()
         {
             if (target == null) return;
 
-            transform.position = target.position + offset;
-            transform.rotation = _framing == Quaternion.identity ? BuildFraming() : _framing;
+            Quaternion yaw = Quaternion.Euler(0f, target.eulerAngles.y, 0f);
+            Vector3 pos = target.position + yaw * offset;
+            transform.position = pos;
+            transform.rotation = DesiredRotation(yaw, pos);
             _velocity = Vector3.zero;
         }
     }

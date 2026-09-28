@@ -5,6 +5,7 @@ namespace Lumen.Core
     public enum GameState
     {
         Boot,
+        Menu,      // tela inicial (botao "Jogar")
         Intro,
         Playing,
         Paused,
@@ -12,10 +13,9 @@ namespace Lumen.Core
     }
 
     /// <summary>
-    /// Estado macro do jogo. O jogo comeca em Intro (abertura da historia,
-    /// controle travado) e so passa para Playing quando o IntroSequenceController
-    /// termina de mostrar o texto. O PhaseManager orientado a dados entra
-    /// quando implementarmos a Fase 2 (Netuno) em diante.
+    /// Estado macro do jogo. O jogo comeca em Menu (tela inicial), vai para Intro
+    /// quando o jogador clica em "Jogar" e so passa para Playing quando o
+    /// IntroSequenceController termina de mostrar o texto.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
@@ -45,7 +45,7 @@ namespace Lumen.Core
 
         private void Start()
         {
-            CurrentState = GameState.Intro;
+            CurrentState = GameState.Menu; // espera o botao "Jogar"
         }
 
         public void SetState(GameState newState)

@@ -8,12 +8,9 @@ namespace Lumen.Narrative
     /// <summary>
     /// Mostra a abertura da historia (tempestade solar, perda de contato com a
     /// Terra, satelite sem combustivel) como texto estilo log de sistema, antes
-    /// de liberar o controle do jogador. Roda automaticamente ao iniciar a cena
-    /// e deixa o GameManager em GameState.Intro ate terminar.
-    ///
-    /// Enquanto nao existir o sistema de dialogo da NOVA (isso vem com a
-    /// Fase 2), esse texto e fixo aqui no codigo. Quando o sistema de dados
-    /// (ScriptableObjects) existir, essas linhas devem migrar para la.
+    /// de liberar o controle do jogador. So comeca depois que o jogador clica em
+    /// "Jogar" no menu inicial (GameState.Intro) e deixa o GameManager em Intro
+    /// ate terminar.
     /// </summary>
     public class IntroSequenceController : MonoBehaviour
     {
@@ -34,7 +31,17 @@ namespace Lumen.Narrative
 
         private void Start()
         {
-            StartCoroutine(RunSequence());
+            if (panelRoot != null) panelRoot.SetActive(false);
+            StartCoroutine(WaitForPlayThenRun());
+        }
+
+        private IEnumerator WaitForPlayThenRun()
+        {
+            while (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Intro)
+                yield return null;
+
+            yield return null; // evita que o mesmo clique/tecla do "Jogar" pule a 1a linha
+            yield return RunSequence();
         }
 
         private IEnumerator RunSequence()

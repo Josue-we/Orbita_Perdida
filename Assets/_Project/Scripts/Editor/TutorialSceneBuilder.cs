@@ -17,41 +17,28 @@ namespace Lumen.EditorTools
 {
     /// <summary>
     /// Ferramenta de Editor que monta a cena inteira automaticamente: GameManager,
-    /// LUMEN, camera, HUD, intro, skybox, cenario decorativo, audio, narracao da
-    /// NOVA, quiz, e agora a Fase 2 (Netuno). Use o menu "LUMEN > Montar Cena de
-    /// Tutorial" - e seguro rodar mais de uma vez, cada parte confere se ja
-    /// existe antes de criar de novo.
+    /// LUMEN, camera, HUD, menu inicial, menu de saida (Esc), intro, skybox,
+    /// cenario decorativo, audio, narracao da NOVA, quiz e a rota de planetas.
+    /// Use o menu "LUMEN > Montar Cena de Tutorial" - e seguro rodar mais de uma
+    /// vez, cada parte confere se ja existe antes de criar de novo.
     /// </summary>
     public static class TutorialSceneBuilder
     {
         private const string PlanetsPackPath = "Assets/Planets of the Solar System 3D";
         private const string DataFolder = "Assets/_Project/Data";
 
-        // Todos os prefabs de planeta do pacote guardam escala 1 usando a mesma
-        // malha esferica, entao por padrao todos apareceriam do mesmo tamanho.
-        // Aqui aplicamos escala proporcional ao raio REAL de cada planeta, com
-        // Netuno ancorado em 180 (= 6x do valor anterior de 30). O layout do
-        // mundo inteiro e derivado desse valor.
-        // Formula: scale = 180 * raioRealKm / 24622 (raio de Netuno).
         // Raio da zona de encontro: proporcional ao tamanho do planeta, com
         // minimo para nao disparar longe demais de planetas pequenos.
         private const float EncounterFactor = 1.7f;
         private const float MinEncounterRadius = 25f;
 
         // Distancias do mundo derivadas do tamanho de Netuno (escala 180 => raio ~180).
-        // Nave em (0,0,40), portao/saida do tutorial em (0,0,120) e Netuno em
-        // (0,10,560). A zona de encontro do quiz tem raio mundial ~306, entao ela
-        // so comeca a valer em z ~254 - depois do portao.
         private static readonly Vector3 LumenStartPosition = new Vector3(0f, 0f, 40f);
         private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 120f);
         private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 560f);
 
-        // --- Ajuste de jogo ---
-        // Os numeros de direcao e consumo vivem em Lumen.Core.GameTuning (fonte
-        // unica, em runtime). Aqui so reaplicamos neles apos EnsureLumen() para
-        // que o Inspector mostre os mesmos valores - os componentes tambem os
-        // reaplicam no Start, entao o jogo funciona sem rodar este menu.
-
+        // Escala proporcional ao raio REAL de cada planeta, com Netuno ancorado em 180.
+        // Formula: scale = 180 * raioRealKm / 24622 (raio de Netuno).
         private static readonly System.Collections.Generic.Dictionary<string, float> PlanetScaleByPrefab =
             new System.Collections.Generic.Dictionary<string, float>
             {
@@ -83,10 +70,15 @@ namespace Lumen.EditorTools
             EnsureBackgroundDecor();
             EnsureAudioManager();
             EnsureAllPlanetRoute();
+            EnsureMainMenu();
+            EnsurePauseMenu();
+
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene());
 
             Debug.Log("[LUMEN] Cena montada. Pressione Play para testar. " +
-                      "Controles: WASD para mover, Espaço/Ctrl para subir e descer, X para frear, " +
-                      "Shift para boost e R para resgate. " +
+                      "Controles: W/S avançar, A/D girar, Espaço/Ctrl subir e descer, X frear, " +
+                      "Shift boost, R resgate, Esc sair. " +
                       "Confira o Console para avisos de qualquer asset ou som faltando.");
         }
 
@@ -99,10 +91,9 @@ namespace Lumen.EditorTools
         }
 
         /// <summary>
-        /// Cena montada em runtime nao ganha EventSystem automaticamente (o Unity
-        /// so cria via menu de UI no editor). Sem EventSystem, NEHUM clique de
-        /// mouse funciona nos botoes do quiz. Precisa do Input Manager (Old) ou
-        /// Both habilitado no Player Settings, igual ao controle do LUMEN.
+        /// Cena montada em runtime nao ganha EventSystem automaticamente. Sem
+        /// EventSystem, NENHUM clique de mouse funciona nos botoes (menu, quiz).
+        /// Precisa do Input Manager (Old) ou Both habilitado no Player Settings.
         /// </summary>
         private static void EnsureEventSystem()
         {
@@ -128,22 +119,18 @@ namespace Lumen.EditorTools
                 var sphereCollider = lumen.AddComponent<SphereCollider>();
                 sphereCollider.radius = 0.7f;
 
-                // Necessario para o Unity disparar OnTriggerEnter de forma confiavel:
-                // sem NENHUM Rigidbody entre os dois colliders envolvidos, triggers
-                // entre objetos movidos so por Transform nao sao detectados sempre.
+                // Necessario para o Unity disparar OnTriggerEnter de forma confiavel.
                 var rb = lumen.AddComponent<Rigidbody>();
                 rb.isKinematic = true;
                 rb.useGravity = false;
             }
 
-            // Reposiciona sempre (mesmo se ja existir de cena antiga): a nave
-            // comeca longe do planeta enorme (Netuno a 560 com raio ~180), com
-            // bastante espaco para a viagem do tutorial ate o farol.
+            // Reposiciona sempre: a nave comeca longe do planeta enorme.
             lumen.transform.position = LumenStartPosition;
+            lumen.transform.rotation = Quaternion.identity; // comeca olhando para Netuno (+Z)
 
             // Tag "Player" SEMPRE garantida: o farol do tutorial e o gatilho do
-            // planeta detectam o LUMEN por ela. Nave criada em versoes antigas
-            // (ou manualmente) nao tinha a tag -> triggers nunca disparavam.
+            // planeta detectam o LUMEN por ela.
             if (lumen.tag != "Player")
                 lumen.tag = "Player";
 
@@ -152,8 +139,6 @@ namespace Lumen.EditorTools
             if (lumen.GetComponent<LumenController>() == null)
                 lumen.AddComponent<LumenController>();
 
-            // O mundo cresceu junto com a rota ate a Terra (3.600+): garante que o limite
-            // de voo acumule o raio aberto novo mesmo se a instancia guardar o valor antigo.
             var lumenController = lumen.GetComponent<LumenController>();
             var energy = lumen.GetComponent<LumenEnergySystem>();
 
@@ -201,9 +186,6 @@ namespace Lumen.EditorTools
                 exit.GetComponent<Renderer>().enabled = false;
             }
 
-            // Zona ampla entre a nave (z = 40) e Netuno (z = 560): fica 80 m a
-            // frente da nave, bem antes da zona de encontro do quiz (z ~254).
-            // Voar para a frente guiado pelo farol atravessa a zona e encerra o tutorial.
             exit.transform.position = TutorialExitPosition;
             exit.transform.localScale = Vector3.one * 40f;
 
@@ -219,8 +201,7 @@ namespace Lumen.EditorTools
 
         /// <summary>
         /// Farol visivel (esfera brilhante do pacote) marcando a saida do tutorial.
-        /// Ao atravessa-lo, o tutorial termina e o farol desaparece. Se o prefab
-        /// nao existir, cai num anel invisivel - mas o HUD ainda guia o jogador.
+        /// Ao atravessa-lo, o tutorial termina e o farol desaparece.
         /// </summary>
         private static void EnsureExitBeacon(Transform exitRoot)
         {
@@ -268,8 +249,7 @@ namespace Lumen.EditorTools
             if (hud == null) hud = canvasGO.AddComponent<HUDController>();
 
             // Duas barras empilhadas no canto superior esquerdo:
-            // SINAL (Terra) em cima e COMBUSTIVEL em baixo. Barras antigas sem
-            // visual (Sliders nus) sao substituidas automaticamente.
+            // SINAL (Terra) em cima e COMBUSTIVEL em baixo.
             var signalBar = EnsureHudBar(canvasGO.transform, "SignalBar",
                 new Color(0.2f, 0.9f, 1f), new Vector2(0.02f, 0.90f), new Vector2(0.30f, 0.94f));
             var energyBar = EnsureHudBar(canvasGO.transform, "EnergyBar",
@@ -305,9 +285,7 @@ namespace Lumen.EditorTools
                 var bg = go.Find("Background");
                 var bgImg = bg != null ? bg.GetComponent<Image>() : null;
 
-                // Reutiliza apenas se for EXATAMENTE o estilo vazado atual
-                // (miolo com alpha 0.15). Qualquer variacao antiga - mesmo que ja
-                // tenha Border/PercentLabel - e recriada para nao vazar visual velho.
+                // Reutiliza apenas se for EXATAMENTE o estilo vazado atual.
                 bool hollowStyle = slider != null && slider.fillRect != null &&
                                    go.Find("Fill") != null && go.Find("Border") != null &&
                                    go.Find("PercentLabel") != null &&
@@ -340,8 +318,7 @@ namespace Lumen.EditorTools
             borderImg.color = new Color(fillColor.r, fillColor.g, fillColor.b, 0.9f);
             borderImg.raycastTarget = false;
 
-            // ...miolo TRANSPARENTE (so um tinte levinho para destacar do cenario):
-            // sem preenchimento, a barra parece mesmo vazia.
+            // ...miolo TRANSPARENTE (so um tinte levinho para destacar do cenario).
             var bg = new GameObject("Background", typeof(RectTransform));
             bg.transform.SetParent(go.transform, false);
             RectStretch(bg.GetComponent<RectTransform>());
@@ -609,6 +586,97 @@ namespace Lumen.EditorTools
             quiz.Configure(panel, questionText, feedbackText, buttons, labels);
         }
 
+        /// <summary>Tela inicial: titulo "Órbita Perdida" + botao "Jogar".</summary>
+        private static void EnsureMainMenu()
+        {
+            if (Object.FindFirstObjectByType<MainMenuController>() != null) return;
+
+            var canvasGO = CreateOverlayCanvas("Menu_Canvas", 30);
+            var panel = CreateFullscreenPanel(canvasGO.transform, new Color(0.02f, 0.03f, 0.08f, 0.85f));
+
+            var title = CreateLabel(panel.transform, "Title", 64, TextAnchor.MiddleCenter,
+                new Vector2(0.1f, 0.55f), new Vector2(0.9f, 0.8f));
+            title.text = "Órbita Perdida";
+            title.fontStyle = FontStyle.Bold;
+            title.color = new Color(0.6f, 0.9f, 1f);
+
+            var play = CreateButton(panel.transform, "PlayButton", "Jogar",
+                new Vector2(0.4f, 0.3f), new Vector2(0.6f, 0.42f));
+
+            var menu = canvasGO.AddComponent<MainMenuController>();
+            menu.Configure(panel, play);
+        }
+
+        /// <summary>Confirmacao de saida (Esc): "Deseja realmente sair do jogo?" Sim / Não.</summary>
+        private static void EnsurePauseMenu()
+        {
+            if (Object.FindFirstObjectByType<PauseMenuController>() != null) return;
+
+            var canvasGO = CreateOverlayCanvas("Pause_Canvas", 40);
+            var panel = CreateFullscreenPanel(canvasGO.transform, new Color(0f, 0f, 0f, 0.75f));
+
+            var message = CreateLabel(panel.transform, "Message", 36, TextAnchor.MiddleCenter,
+                new Vector2(0.1f, 0.55f), new Vector2(0.9f, 0.75f));
+            message.text = "Deseja realmente sair do jogo?";
+
+            var yes = CreateButton(panel.transform, "YesButton", "Sim",
+                new Vector2(0.28f, 0.35f), new Vector2(0.46f, 0.47f));
+            var no = CreateButton(panel.transform, "NoButton", "Não",
+                new Vector2(0.54f, 0.35f), new Vector2(0.72f, 0.47f));
+
+            panel.SetActive(false);
+
+            var pause = canvasGO.AddComponent<PauseMenuController>();
+            pause.Configure(panel, yes, no);
+        }
+
+        private static GameObject CreateOverlayCanvas(string name, int sortingOrder)
+        {
+            var canvasGO = new GameObject(name);
+            var canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = sortingOrder;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+            return canvasGO;
+        }
+
+        private static GameObject CreateFullscreenPanel(Transform parent, Color color)
+        {
+            var panel = new GameObject("Panel", typeof(RectTransform));
+            panel.transform.SetParent(parent, false);
+            SetFullScreen(panel.GetComponent<RectTransform>());
+            var img = panel.AddComponent<Image>();
+            img.color = color; // raycastTarget ligado: bloqueia cliques no jogo por baixo
+            return panel;
+        }
+
+        private static Button CreateButton(Transform parent, string name, string label,
+            Vector2 anchorMin, Vector2 anchorMax)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            var img = go.AddComponent<Image>();
+            img.color = new Color(0.2f, 0.4f, 0.6f, 1f);
+
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = img;
+
+            var text = CreateLabel(go.transform, "Label", 28, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one);
+            text.text = label;
+            text.fontStyle = FontStyle.Bold;
+            text.raycastTarget = false;
+
+            return button;
+        }
+
         private static void EnsureSkybox()
         {
             string path = $"{PlanetsPackPath}/Materials/Skybox.mat";
@@ -630,9 +698,7 @@ namespace Lumen.EditorTools
 
             var root = new GameObject("BackgroundDecor");
 
-            // So decoracao distante e nao-interativa (os planetas "de verdade",
-            // alcancaveis, sao criados separadamente em EnsureAllPlanetRoute).
-            // O Sol e empurrado para longe: Netuno gigante ocupava a posicao antiga.
+            // So decoracao distante e nao-interativa.
             InstantiateDecor("Sun.prefab", new Vector3(0f, 180f, 950f), root.transform, addRotation: false);
             InstantiateDecor("Nebula_00.prefab", new Vector3(-220f, 40f, 180f), root.transform, addRotation: false);
         }
@@ -843,8 +909,7 @@ namespace Lumen.EditorTools
                     "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);
 
-            // 2) Planetas em rota ZIGUE-ZAGUE (x: +1100 -> -1900 -> +600 -> -200),
-            //    nada de linha reta ate a Terra: o jogador e guiado planeta a planeta.
+            // 2) Planetas em rota ZIGUE-ZAGUE: o jogador e guiado planeta a planeta.
             var netuno = EnsurePlanet("Neptune.prefab", "Netuno_Encounter", NetunoPosition, phaseNetuno, 0);
             var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  new Vector3(1100f, 30f, 1150f), phaseUrano, 1);
             var saturno = EnsurePlanet("Saturn.prefab", "Saturno_Encounter", new Vector3(0f, 50f, 1750f), phaseSaturno, 2);
