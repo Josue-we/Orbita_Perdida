@@ -13,11 +13,15 @@ namespace Lumen.Core
     public static class GameTuning
     {
         // --- Combustivel ---
-        // Calibrado pela rota: o trecho mais longo (Jupiter -> Marte) tem ~2.725
-        // unidades = ~303 s a 9 u/s => ~61 de gasto num tanque de 100, ou seja
-        // ~39% de folga. Parado nao gasta nada.
+        // Calibrado pela rota (ver TutorialSceneBuilder): o trecho mais longo
+        // (Saturno -> Jupiter, ~1600 unidades) demora ~178s na velocidade maxima
+        // sem boost. A 0.45/s isso gasta ~80 do tanque de 100, ou seja, o jogador
+        // SEMPRE chega no proximo planeta, mas com so ~20% de combustivel - o
+        // suficiente para nao ficar preso no meio do caminho, mas apertado o
+        // bastante para desestimular pular planetas e ir direto para a Terra.
+        // Trechos mais curtos sobram mais folga, o que e esperado.
         public const float MaxEnergy = 100f;
-        public const float ThrustDrainPerSecond = 0.2f;
+        public const float ThrustDrainPerSecond = 0.45f;
         public const float IdleDrainPerSecond = 0f;
 
         // --- Direcao ---
@@ -34,9 +38,7 @@ namespace Lumen.Core
         public const float TurnSpeed = 100f;
 
         // --- Camera (terceira pessoa, atras da nave) ---
-        // Offset no espaco da nave (so o giro horizontal conta): atras e um pouco acima.
         public static readonly Vector3 CameraOffset = new Vector3(0f, 4f, -12f);
-        // Ponto para onde a camera olha, a frente da nave.
         public static readonly Vector3 CameraLookAhead = new Vector3(0f, 1f, 12f);
         public const float CameraPositionSmooth = 0.16f;
         public const float CameraRotationSmooth = 6f;

@@ -28,17 +28,32 @@ namespace Lumen.EditorTools
         private const string DataFolder = "Assets/_Project/Data";
 
         // Raio da zona de encontro: proporcional ao tamanho do planeta, com
-        // minimo para nao disparar longe demais de planetas pequenos.
-        private const float EncounterFactor = 1.7f;
+        // minimo para nao disparar longe demais de planetas pequenos. Reduzido
+        // de 1.7 para 1.4 (ainda comodo, mas permite planetas mais proximos
+        // sem as zonas de quiz se sobreporem).
+        private const float EncounterFactor = 1.4f;
         private const float MinEncounterRadius = 25f;
 
-        // Distancias do mundo derivadas do tamanho de Netuno (escala 180 => raio ~180).
+        // Rota recalibrada para ser mais curta (menos tempo "andando no espaço"):
+        // a distancia minima entre dois planetas e limitada pelo tamanho deles
+        // (Saturno e Jupiter sao enormes, entao a zona de encontro ao redor deles
+        // tambem e grande - nao da pra encostar demais sem sobrepor as zonas de
+        // quiz). Estas posicoes respeitam essa distancia minima com uma margem de
+        // seguranca, resultando em ~5.400 unidades de rota total (contra ~8.600
+        // da versao anterior, uma reducao de ~37%).
         private static readonly Vector3 LumenStartPosition = new Vector3(0f, 0f, 40f);
         private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 120f);
-        private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 560f);
+        private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 520f);
+        private static readonly Vector3 UranoPosition = new Vector3(550f, 25f, 1100f);
+        private static readonly Vector3 SaturnoPosition = new Vector3(0f, 45f, 2110f);
+        private static readonly Vector3 JupiterPosition = new Vector3(-900f, 70f, 3433f);
+        private static readonly Vector3 MartePosition = new Vector3(-200f, 40f, 4215f);
+        private static readonly Vector3 TerraPosition = new Vector3(-300f, 20f, 4550f);
 
-        // Escala proporcional ao raio REAL de cada planeta, com Netuno ancorado em 180.
-        // Formula: scale = 180 * raioRealKm / 24622 (raio de Netuno).
+        // Todos os prefabs de planeta do pacote guardam escala 1 usando a mesma
+        // malha esferica, entao por padrao todos apareceriam do mesmo tamanho.
+        // Aqui aplicamos escala proporcional ao raio REAL de cada planeta, com
+        // Netuno ancorado em 180. Formula: scale = 180 * raioRealKm / 24622.
         private static readonly System.Collections.Generic.Dictionary<string, float> PlanetScaleByPrefab =
             new System.Collections.Generic.Dictionary<string, float>
             {
@@ -172,7 +187,7 @@ namespace Lumen.EditorTools
             if (follow == null) follow = cam.gameObject.AddComponent<CameraFollow>();
             follow.SetTarget(target);
 
-            // A rota chega a 3.600+ unidades; o plano distante padrão (1000) cortaria os planetas longos.
+            // Plano distante generoso: cobre a rota inteira (chega a ~4.550) com folga.
             cam.farClipPlane = 20000f;
         }
 
@@ -909,13 +924,14 @@ namespace Lumen.EditorTools
                     "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);
 
-            // 2) Planetas em rota ZIGUE-ZAGUE: o jogador e guiado planeta a planeta.
+            // 2) Planetas em rota ZIGUE-ZAGUE, agora bem mais compacta: o jogador
+            //    e guiado planeta a planeta sem precisar cruzar trechos enormes.
             var netuno = EnsurePlanet("Neptune.prefab", "Netuno_Encounter", NetunoPosition, phaseNetuno, 0);
-            var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  new Vector3(1100f, 30f, 1150f), phaseUrano, 1);
-            var saturno = EnsurePlanet("Saturn.prefab", "Saturno_Encounter", new Vector3(0f, 50f, 1750f), phaseSaturno, 2);
-            var jupiter = EnsurePlanet("Jupiter.prefab", "Jupiter_Encounter", new Vector3(-1900f, 80f, 2350f), phaseJupiter, 3);
-            var marte  = EnsurePlanet("Mars.prefab",   "Marte_Encounter",   new Vector3(600f, 40f, 3000f), phaseMarte, 4);
-            var terra  = EnsurePlanet("Earth.prefab",  "Terra_Encounter",   new Vector3(-200f, 20f, 3600f), phaseTerra, 5);
+            var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  UranoPosition, phaseUrano, 1);
+            var saturno = EnsurePlanet("Saturn.prefab", "Saturno_Encounter", SaturnoPosition, phaseSaturno, 2);
+            var jupiter = EnsurePlanet("Jupiter.prefab", "Jupiter_Encounter", JupiterPosition, phaseJupiter, 3);
+            var marte  = EnsurePlanet("Mars.prefab",   "Marte_Encounter",   MartePosition, phaseMarte, 4);
+            var terra  = EnsurePlanet("Earth.prefab",  "Terra_Encounter",   TerraPosition, phaseTerra, 5);
 
             // 3) Encadeia a rota: ao terminar um quiz, a seta aponta para o proximo.
             PlanetApproachTrigger[] route = { netuno, urano, saturno, jupiter, marte, terra };
