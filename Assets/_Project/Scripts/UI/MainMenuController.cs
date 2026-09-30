@@ -4,7 +4,9 @@ using Lumen.Core;
 
 namespace Lumen.UI
 {
-    /// <summary>Tela inicial: titulo + botao "Jogar". Ao clicar, libera a intro.</summary>
+    /// <summary>Tela inicial: titulo + botao "Jogar". Ao clicar, libera a intro
+    /// e avisa o resto do jogo (EventBus.OnGameStarted) para, por exemplo, o
+    /// AudioManager trocar da musica do menu para a da gameplay.</summary>
     public class MainMenuController : MonoBehaviour
     {
         [SerializeField] private GameObject panelRoot;
@@ -26,6 +28,7 @@ namespace Lumen.UI
         private void OnPlay()
         {
             if (panelRoot != null) panelRoot.SetActive(false);
+            EventBus.RaiseGameStarted();
             if (GameManager.Instance != null)
                 GameManager.Instance.SetState(GameState.Intro);
         }

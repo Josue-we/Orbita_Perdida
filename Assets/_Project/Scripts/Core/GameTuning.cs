@@ -15,11 +15,11 @@ namespace Lumen.Core
         // --- Combustivel ---
         // Calibrado pela rota (ver TutorialSceneBuilder): o trecho mais longo
         // (Saturno -> Jupiter, ~1600 unidades) demora ~178s na velocidade maxima
-        // sem boost. A 0.45/s isso gasta ~80 do tanque de 100, ou seja, o jogador
-        // SEMPRE chega no proximo planeta, mas com so ~20% de combustivel - o
-        // suficiente para nao ficar preso no meio do caminho, mas apertado o
-        // bastante para desestimular pular planetas e ir direto para a Terra.
-        // Trechos mais curtos sobram mais folga, o que e esperado.
+        // SEM boost. A 0.45/s isso gasta ~80 do tanque de 100, ou seja, o jogador
+        // SEMPRE chega no proximo planeta, mas com so ~20% de combustivel.
+        // Boostar o trecho inteiro gasta MENOS combustivel total (o dreno e por
+        // segundo, nao por distancia - andar mais rapido leva menos tempo
+        // acelerando), entao usar o boost o tempo todo deixa mais folga que isso.
         public const float MaxEnergy = 100f;
         public const float ThrustDrainPerSecond = 0.45f;
         public const float IdleDrainPerSecond = 0f;
@@ -27,7 +27,8 @@ namespace Lumen.Core
         // --- Direcao ---
         public const float Acceleration = 26f;
         public const float MaxSpeed = 9f;
-        public const float BoostSpeed = 15f;
+        // Boost bem mais rapido que o normal (quase 2.7x) - liberado ao concluir o tutorial.
+        public const float BoostSpeed = 24f;
         public const float CoastDamping = 7f;
         public const float BrakeDamping = 16f;
 

@@ -26,21 +26,15 @@ namespace Lumen.EditorTools
     {
         private const string PlanetsPackPath = "Assets/Planets of the Solar System 3D";
         private const string DataFolder = "Assets/_Project/Data";
+        private const string AudioFolder = "Assets/_Project/Audio";
+        private const string MenuMusicFolder = "Assets/_Project/Audio/Music/Menu";
 
         // Raio da zona de encontro: proporcional ao tamanho do planeta, com
-        // minimo para nao disparar longe demais de planetas pequenos. Reduzido
-        // de 1.7 para 1.4 (ainda comodo, mas permite planetas mais proximos
-        // sem as zonas de quiz se sobreporem).
+        // minimo para nao disparar longe demais de planetas pequenos.
         private const float EncounterFactor = 1.4f;
         private const float MinEncounterRadius = 25f;
 
-        // Rota recalibrada para ser mais curta (menos tempo "andando no espaço"):
-        // a distancia minima entre dois planetas e limitada pelo tamanho deles
-        // (Saturno e Jupiter sao enormes, entao a zona de encontro ao redor deles
-        // tambem e grande - nao da pra encostar demais sem sobrepor as zonas de
-        // quiz). Estas posicoes respeitam essa distancia minima com uma margem de
-        // seguranca, resultando em ~5.400 unidades de rota total (contra ~8.600
-        // da versao anterior, uma reducao de ~37%).
+        // Rota recalibrada para ser mais curta (menos tempo "andando no espaço").
         private static readonly Vector3 LumenStartPosition = new Vector3(0f, 0f, 40f);
         private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 120f);
         private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 520f);
@@ -362,7 +356,7 @@ namespace Lumen.EditorTools
             RectStretch(percent.GetComponent<RectTransform>());
             var percentText = percent.AddComponent<Text>();
             percentText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            percentText.fontSize = 15;
+            percentText.fontSize = 20;
             percentText.fontStyle = FontStyle.Bold;
             percentText.alignment = TextAnchor.MiddleCenter;
             percentText.color = Color.white;
@@ -394,7 +388,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 13;
+            text.fontSize = 24;
             text.fontStyle = FontStyle.Bold;
             text.color = color;
             text.alignment = TextAnchor.LowerLeft;
@@ -435,7 +429,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 16;
+            text.fontSize = 28;
             text.color = Color.white;
             text.alignment = TextAnchor.LowerLeft;
 
@@ -455,7 +449,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 18;
+            text.fontSize = 30;
             text.color = Color.white;
             text.alignment = TextAnchor.UpperRight;
 
@@ -507,7 +501,7 @@ namespace Lumen.EditorTools
             var bg = panel.AddComponent<Image>();
             bg.color = Color.black;
 
-            var text = CreateLabel(panel.transform, "LogText", 28, TextAnchor.MiddleCenter,
+            var text = CreateLabel(panel.transform, "LogText", 40, TextAnchor.MiddleCenter,
                 new Vector2(0.1f, 0.4f), new Vector2(0.9f, 0.6f));
 
             var intro = canvasGO.AddComponent<IntroSequenceController>();
@@ -747,6 +741,12 @@ namespace Lumen.EditorTools
 
         private static void EnsureAudioManager()
         {
+            // Garante que a pasta dedicada da trilha do MENU exista, mesmo antes de
+            // qualquer arquivo ser colocado nela - assim ela ja aparece pronta no
+            // Project window para o usuario arrastar o audio da tela inicial.
+            EnsureFolder("Assets/_Project/Audio", "Music");
+            EnsureFolder("Assets/_Project/Audio/Music", "Menu");
+
             var manager = Object.FindFirstObjectByType<AudioManager>();
             if (manager == null)
             {
@@ -756,31 +756,63 @@ namespace Lumen.EditorTools
                 manager = go.AddComponent<AudioManager>();
             }
 
-            AutoAssignMusic(manager);
+            AutoAssignMenuMusic(manager);
+            AutoAssignGameplayMusic(manager);
             AutoAssignSfx(manager);
         }
 
-        private static void AutoAssignMusic(AudioManager manager)
+        /// <summary>
+        /// A trilha do MENU e qualquer AudioClip dentro da pasta dedicada
+        /// Assets/_Project/Audio/Music/Menu - nao depende de nome de arquivo,
+        /// so do local onde ele foi salvo.
+        /// </summary>
+        private static void AutoAssignMenuMusic(AudioManager manager)
         {
-            if (manager.HasMusicClip) return;
+            if (manager.HasMenuMusicClip) return;
 
-            string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/_Project/Audio" });
+            string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { MenuMusicFolder });
             if (guids.Length == 0)
             {
-                Debug.LogWarning("[LUMEN] Nenhum AudioClip encontrado em Assets/_Project/Audio para a trilha.");
+                Debug.LogWarning($"[LUMEN] Nenhum AudioClip encontrado em '{MenuMusicFolder}' para a trilha da " +
+                                  "tela inicial. Coloque o arquivo de música do menu nessa pasta e rode o menu de novo.");
+                return;
+            }
+
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guids[0]));
+            manager.SetMenuMusicClip(clip);
+            Debug.Log($"[LUMEN] Trilha do menu atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+        }
+
+        /// <summary>
+        /// A trilha da GAMEPLAY continua sendo procurada por palavra-chave em toda
+        /// a pasta de audio, exceto dentro da pasta dedicada do menu (para as duas
+        /// trilhas nunca acabarem apontando para o mesmo arquivo).
+        /// </summary>
+        private static void AutoAssignGameplayMusic(AudioManager manager)
+        {
+            if (manager.HasGameplayMusicClip) return;
+
+            string[] allGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { AudioFolder });
+            string[] menuGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { MenuMusicFolder });
+            var guids = System.Array.FindAll(allGuids, g => System.Array.IndexOf(menuGuids, g) < 0);
+
+            if (guids.Length == 0)
+            {
+                Debug.LogWarning($"[LUMEN] Nenhum AudioClip encontrado em '{AudioFolder}' (fora da pasta do menu) " +
+                                  "para a trilha da gameplay.");
                 return;
             }
 
             var clip = FindClipByKeywords(guids, "theme", "music", "trilha", "tema")
                        ?? AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guids[0]));
 
-            manager.SetMusicClip(clip);
-            Debug.Log($"[LUMEN] Trilha atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+            manager.SetGameplayMusicClip(clip);
+            Debug.Log($"[LUMEN] Trilha da gameplay atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
         }
 
         private static void AutoAssignSfx(AudioManager manager)
         {
-            string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/_Project/Audio" });
+            string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { AudioFolder });
             if (guids.Length == 0) return;
 
             TryAssignSfx(manager.HasSelectSfx, manager.SetSelectSfx, guids, "Seleção",
@@ -924,8 +956,7 @@ namespace Lumen.EditorTools
                     "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);
 
-            // 2) Planetas em rota ZIGUE-ZAGUE, agora bem mais compacta: o jogador
-            //    e guiado planeta a planeta sem precisar cruzar trechos enormes.
+            // 2) Planetas em rota ZIGUE-ZAGUE, compacta: o jogador e guiado planeta a planeta.
             var netuno = EnsurePlanet("Neptune.prefab", "Netuno_Encounter", NetunoPosition, phaseNetuno, 0);
             var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  UranoPosition, phaseUrano, 1);
             var saturno = EnsurePlanet("Saturn.prefab", "Saturno_Encounter", SaturnoPosition, phaseSaturno, 2);

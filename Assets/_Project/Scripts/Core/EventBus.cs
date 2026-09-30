@@ -21,6 +21,7 @@ namespace Lumen.Core
         public static event Action<string> OnRescued; // local para onde a nave voltou
         public static event Action OnQuizOpened;
         public static event Action OnQuizClosed;
+        public static event Action OnGameStarted; // jogador clicou "Jogar" no menu inicial
 
         /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
         public static bool TutorialCompleted { get; private set; }
@@ -81,6 +82,11 @@ namespace Lumen.Core
         public static void RaiseQuizClosed()
         {
             OnQuizClosed?.Invoke();
+        }
+
+        public static void RaiseGameStarted()
+        {
+            OnGameStarted?.Invoke();
         }
     }
 }

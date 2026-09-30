@@ -3357,7 +3357,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Gameplay.LumenController
   acceleration: 26
   maxSpeed: 9
-  boostSpeed: 15
+  boostSpeed: 24
   coastDamping: 7
   brakeDamping: 16
   rotationSmooth: 8
@@ -4393,8 +4393,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dd10172f9f755549ae6c016b4570f40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Audio.AudioManager
-  backgroundMusic: {fileID: 8300000, guid: f578d4048759eea45a5011c4f53f4cc9, type: 3}
+  menuMusic: {fileID: 8300000, guid: 11a93a54698ed754db21e9792ac037c5, type: 3}
+  gameplayMusic: {fileID: 8300000, guid: b3532200ddfe0aa4e97a0fb3ea452afd, type: 3}
   musicVolume: 0.5
+  musicTransitionSeconds: 0.6
   quizMusicMultiplier: 0.25
   duckFadeSeconds: 0.35
   selectSfx: {fileID: 8300000, guid: 8eda2355f2af4da4f9758009acc0a944, type: 3}
