@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Marte_Quiz_09
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Do que \xE9 feita principalmente a atmosfera de Marte?"
+  Options:
+  - "Di\xF3xido de carbono"
+  - "Oxig\xEAnio"
+  - "Nitrog\xEAnio"
+  CorrectIndex: 0
+  CorrectFeedback: "Certo! A atmosfera de Marte \xE9 cerca de 95% de CO2 e muito
+    fina, com menos de 1% da press\xE3o da Terra."
+  IncorrectFeedback: "N\xE3o d\xE1 para respirar l\xE1. A maior parte do ar marciano
+    \xE9 o g\xE1s que sai das nossas chamin\xE9s."

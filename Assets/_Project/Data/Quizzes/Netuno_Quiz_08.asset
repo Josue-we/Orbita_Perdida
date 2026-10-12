@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Netuno_Quiz_08
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Em 1989, a Voyager 2 viu uma enorme tempestade escura em Netuno. Como
+    ela ficou conhecida?
+  Options:
+  - Grande Mancha Escura
+  - Grande Mancha Vermelha
+  - Grande Mancha Branca
+  CorrectIndex: 0
+  CorrectFeedback: "Isso! Era uma tempestade do tamanho da Terra, e anos depois o
+    telesc\xF3pio Hubble mostrou que ela havia sumido."
+  IncorrectFeedback: "A Mancha Vermelha \xE9 de J\xFApiter e a Mancha Branca \xE9
+    de Saturno. A de Netuno tinha cor de noite."

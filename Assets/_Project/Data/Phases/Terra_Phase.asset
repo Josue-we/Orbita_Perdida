@@ -15,7 +15,19 @@ MonoBehaviour:
   PlanetName: Terra
   NarrationLines:
   - Aproximando da Terra.
-  - Depois de coletar conhecimento planeta a planeta, o retorno está quase completo.
-  - LUMEN, prepare-se para concluir o último quiz e voltar para casa.
+  - "Depois de coletar conhecimento planeta a planeta, o retorno est\xE1 quase completo."
+  - "LUMEN, prepare-se para concluir o \xFAltimo quiz e voltar para casa."
   Quiz: {fileID: 11400000, guid: 0219701e3869f864cba14a0f0bb7a97e, type: 2}
+  QuizPool:
+  - {fileID: 11400000, guid: 0219701e3869f864cba14a0f0bb7a97e, type: 2}
+  - {fileID: 11400000, guid: 9941296e75c159649854e0949021dd37, type: 2}
+  - {fileID: 11400000, guid: 43fff6ff856e33349a213d0b5640a765, type: 2}
+  - {fileID: 11400000, guid: d631a4338366bed47bd95a7d2701aa68, type: 2}
+  - {fileID: 11400000, guid: 908a694d21cdcc6429d84d3a2f61b15b, type: 2}
+  - {fileID: 11400000, guid: a62c3639cd718ac4793c2f9ad6da6b87, type: 2}
+  - {fileID: 11400000, guid: 6d7c065de11ca3f498cc8e4894d93148, type: 2}
+  - {fileID: 11400000, guid: 027c041e3ad9d2f47bc33df0dc3d5e03, type: 2}
+  - {fileID: 11400000, guid: a36ff41c8e4ae0d46b08cbef00aa7e70, type: 2}
+  - {fileID: 11400000, guid: 6c584ac656aefec46ab2d3d0feb43e33, type: 2}
+  - {fileID: 11400000, guid: 27ab7e9cc5e63ca4dbbcc01d9c331746, type: 2}
   FragmentEnergyReward: 0

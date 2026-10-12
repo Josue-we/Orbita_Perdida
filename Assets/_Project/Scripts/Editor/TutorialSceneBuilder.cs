@@ -27,7 +27,10 @@ namespace Lumen.EditorTools
         private const string PlanetsPackPath = "Assets/Planets of the Solar System 3D";
         private const string DataFolder = "Assets/_Project/Data";
         private const string AudioFolder = "Assets/_Project/Audio";
+        private const string MusicFolder = "Assets/_Project/Audio/Music";
         private const string MenuMusicFolder = "Assets/_Project/Audio/Music/Menu";
+        // Loops da nave ficam em Resources para o AudioManager achar mesmo sem atribuicao no Inspector.
+        private const string ResourcesAudioFolder = "Assets/_Project/Resources/Audio";
 
         // Raio da zona de encontro: proporcional ao tamanho do planeta, com
         // minimo para nao disparar longe demais de planetas pequenos.
@@ -36,13 +39,30 @@ namespace Lumen.EditorTools
 
         // Rota recalibrada para ser mais curta (menos tempo "andando no espaço").
         private static readonly Vector3 LumenStartPosition = new Vector3(0f, 0f, 40f);
-        private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 120f);
-        private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 520f);
-        private static readonly Vector3 UranoPosition = new Vector3(550f, 25f, 1100f);
-        private static readonly Vector3 SaturnoPosition = new Vector3(0f, 45f, 2110f);
-        private static readonly Vector3 JupiterPosition = new Vector3(-900f, 70f, 3433f);
-        private static readonly Vector3 MartePosition = new Vector3(-200f, 40f, 4215f);
-        private static readonly Vector3 TerraPosition = new Vector3(-300f, 20f, 4550f);
+        private static readonly Vector3 TutorialExitPosition = new Vector3(0f, 0f, 360f);
+
+        // --- Rota (nave 4x mais rapida: distancias 4x maiores, mesma duracao de viagem) ---
+        // Trechos (unidades): inicio->Netuno ~1.960 | Netuno->Urano ~3.200 | Urano->Saturno ~4.600 |
+        // Saturno->Jupiter ~6.300 (o mais longo: ~175 s a 36 u/s = ~79% do tanque) |
+        // Jupiter->Marte ~4.200 | Marte->Terra ~1.350. Zigue-zague para um planeta nunca
+        // ficar na frente/ao lado do outro.
+        private static readonly Vector3 NetunoPosition = new Vector3(0f, 10f, 2000f);
+        private static readonly Vector3 UranoPosition = new Vector3(2400f, 100f, 4120f);
+        private static readonly Vector3 SaturnoPosition = new Vector3(-900f, 180f, 7320f);
+        private static readonly Vector3 JupiterPosition = new Vector3(2500f, 80f, 12620f);
+        private static readonly Vector3 MartePosition = new Vector3(100f, 40f, 16070f);
+        private static readonly Vector3 TerraPosition = new Vector3(1000f, 20f, 17070f);
+
+        // --- Sistema solar de fundo (sem quiz) ---
+        // O Sol fica longe, a direita da rota: no inicio ilumina a nave pelo lado direito e,
+        // no fim da viagem, por tras (a nave chega "de costas" para ele, bem iluminada).
+        private static readonly Vector3 SunPosition = new Vector3(12000f, 400f, 8000f);
+        private static readonly Vector3 MercuryPosition = new Vector3(3300f, -30f, 14000f);
+        private static readonly Vector3 VenusPosition = new Vector3(-1500f, 40f, 14400f);
+        private static readonly Vector3 PlutoPosition = new Vector3(-1800f, 30f, -1200f);
+        private static readonly Vector3 MoonPosition = new Vector3(1260f, 60f, 16930f);
+        private const float SunScale = 500f;
+        private const float DecorPlanetBoost = 2f; // Mercurio/Venus/Plutao ficam longe: 2x maiores para serem vistos
 
         // Todos os prefabs de planeta do pacote guardam escala 1 usando a mesma
         // malha esferica, entao por padrao todos apareceriam do mesmo tamanho.
@@ -181,8 +201,8 @@ namespace Lumen.EditorTools
             if (follow == null) follow = cam.gameObject.AddComponent<CameraFollow>();
             follow.SetTarget(target);
 
-            // Plano distante generoso: cobre a rota inteira (chega a ~4.550) com folga.
-            cam.farClipPlane = 20000f;
+            // Plano distante generoso: cobre a rota inteira (~17.000) e o Sol com folga.
+            cam.farClipPlane = 60000f;
         }
 
         private static void EnsureExitTrigger()
@@ -250,7 +270,7 @@ namespace Lumen.EditorTools
                 canvasGO = new GameObject("HUD_Canvas");
                 var canvas = canvasGO.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvasGO.AddComponent<CanvasScaler>();
+                UiTextTuning.ConfigureScaler(canvasGO.AddComponent<CanvasScaler>());
                 canvasGO.AddComponent<GraphicRaycaster>();
             }
 
@@ -356,7 +376,7 @@ namespace Lumen.EditorTools
             RectStretch(percent.GetComponent<RectTransform>());
             var percentText = percent.AddComponent<Text>();
             percentText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            percentText.fontSize = 20;
+            percentText.fontSize = GameTuning.HudPercentFontSize;
             percentText.fontStyle = FontStyle.Bold;
             percentText.alignment = TextAnchor.MiddleCenter;
             percentText.color = Color.white;
@@ -388,7 +408,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 24;
+            text.fontSize = GameTuning.HudLabelFontSize;
             text.fontStyle = FontStyle.Bold;
             text.color = color;
             text.alignment = TextAnchor.LowerLeft;
@@ -429,7 +449,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 28;
+            text.fontSize = GameTuning.HudObjectiveFontSize;
             text.color = Color.white;
             text.alignment = TextAnchor.LowerLeft;
 
@@ -449,7 +469,7 @@ namespace Lumen.EditorTools
 
             var text = go.AddComponent<Text>();
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 30;
+            text.fontSize = GameTuning.HudFragmentsFontSize;
             text.color = Color.white;
             text.alignment = TextAnchor.UpperRight;
 
@@ -492,7 +512,7 @@ namespace Lumen.EditorTools
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 20; // fica por cima de tudo
-            canvasGO.AddComponent<CanvasScaler>();
+            UiTextTuning.ConfigureScaler(canvasGO.AddComponent<CanvasScaler>());
             canvasGO.AddComponent<GraphicRaycaster>();
 
             var panel = new GameObject("Panel", typeof(RectTransform));
@@ -501,8 +521,8 @@ namespace Lumen.EditorTools
             var bg = panel.AddComponent<Image>();
             bg.color = Color.black;
 
-            var text = CreateLabel(panel.transform, "LogText", 40, TextAnchor.MiddleCenter,
-                new Vector2(0.1f, 0.4f), new Vector2(0.9f, 0.6f));
+            var text = CreateLabel(panel.transform, "LogText", GameTuning.IntroFontSize, TextAnchor.MiddleCenter,
+                new Vector2(0.06f, 0.22f), new Vector2(0.94f, 0.78f));
 
             var intro = canvasGO.AddComponent<IntroSequenceController>();
             intro.Configure(panel, text);
@@ -516,20 +536,20 @@ namespace Lumen.EditorTools
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5; // acima do HUD, abaixo do quiz e da intro
-            canvasGO.AddComponent<CanvasScaler>();
+            UiTextTuning.ConfigureScaler(canvasGO.AddComponent<CanvasScaler>());
             canvasGO.AddComponent<GraphicRaycaster>();
 
             var panel = new GameObject("Panel", typeof(RectTransform));
             panel.transform.SetParent(canvasGO.transform, false);
             var panelRt = panel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.1f, 0.06f);
-            panelRt.anchorMax = new Vector2(0.9f, 0.2f);
+            panelRt.anchorMin = GameTuning.NovaPanelAnchorMin;
+            panelRt.anchorMax = GameTuning.NovaPanelAnchorMax;
             panelRt.offsetMin = Vector2.zero;
             panelRt.offsetMax = Vector2.zero;
             var bg = panel.AddComponent<Image>();
             bg.color = new Color(0f, 0f, 0f, 0.6f);
 
-            var text = CreateLabel(panel.transform, "Caption", 20, TextAnchor.MiddleCenter,
+            var text = CreateLabel(panel.transform, "Caption", GameTuning.NovaCaptionFontSize, TextAnchor.MiddleCenter,
                 Vector2.zero, Vector2.one, new Vector2(16, 8), new Vector2(-16, -8));
             text.color = new Color(0.6f, 0.9f, 1f);
 
@@ -547,33 +567,33 @@ namespace Lumen.EditorTools
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 10;
-            canvasGO.AddComponent<CanvasScaler>();
+            UiTextTuning.ConfigureScaler(canvasGO.AddComponent<CanvasScaler>());
             canvasGO.AddComponent<GraphicRaycaster>();
 
             var panel = new GameObject("Panel", typeof(RectTransform));
             panel.transform.SetParent(canvasGO.transform, false);
             var panelRt = panel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.2f, 0.15f);
-            panelRt.anchorMax = new Vector2(0.8f, 0.85f);
+            panelRt.anchorMin = GameTuning.QuizPanelAnchorMin;
+            panelRt.anchorMax = GameTuning.QuizPanelAnchorMax;
             panelRt.offsetMin = Vector2.zero;
             panelRt.offsetMax = Vector2.zero;
             var bg = panel.AddComponent<Image>();
             bg.color = new Color(0.05f, 0.05f, 0.1f, 0.92f);
 
-            var questionText = CreateLabel(panel.transform, "Question", 22, TextAnchor.MiddleCenter,
-                new Vector2(0.05f, 0.68f), new Vector2(0.95f, 0.95f));
+            var questionText = CreateLabel(panel.transform, "Question", GameTuning.QuizQuestionFontSize, TextAnchor.MiddleCenter,
+                GameTuning.QuizQuestionMin, GameTuning.QuizQuestionMax);
 
             var buttons = new Button[3];
             var labels = new Text[3];
-            float[] tops = { 0.60f, 0.40f, 0.20f };
+            float[] tops = GameTuning.QuizOptionTops;
 
             for (int i = 0; i < 3; i++)
             {
                 var btnGO = new GameObject($"Option{i}", typeof(RectTransform));
                 btnGO.transform.SetParent(panel.transform, false);
                 var btnRt = btnGO.GetComponent<RectTransform>();
-                btnRt.anchorMin = new Vector2(0.08f, tops[i] - 0.16f);
-                btnRt.anchorMax = new Vector2(0.92f, tops[i]);
+                btnRt.anchorMin = new Vector2(0.06f, tops[i] - GameTuning.QuizOptionHeight);
+                btnRt.anchorMax = new Vector2(0.94f, tops[i]);
                 btnRt.offsetMin = Vector2.zero;
                 btnRt.offsetMax = Vector2.zero;
 
@@ -581,12 +601,12 @@ namespace Lumen.EditorTools
                 img.color = new Color(0.2f, 0.4f, 0.6f, 1f);
                 buttons[i] = btnGO.AddComponent<Button>();
 
-                labels[i] = CreateLabel(btnGO.transform, "Label", 16, TextAnchor.MiddleCenter,
+                labels[i] = CreateLabel(btnGO.transform, "Label", GameTuning.QuizOptionFontSize, TextAnchor.MiddleCenter,
                     Vector2.zero, Vector2.one, new Vector2(10, 4), new Vector2(-10, -4));
             }
 
-            var feedbackText = CreateLabel(panel.transform, "Feedback", 16, TextAnchor.MiddleCenter,
-                new Vector2(0.05f, 0f), new Vector2(0.95f, 0.14f));
+            var feedbackText = CreateLabel(panel.transform, "Feedback", GameTuning.QuizFeedbackFontSize, TextAnchor.MiddleCenter,
+                GameTuning.QuizFeedbackMin, GameTuning.QuizFeedbackMax);
             feedbackText.color = new Color(1f, 0.9f, 0.4f);
 
             panel.SetActive(false);
@@ -645,7 +665,7 @@ namespace Lumen.EditorTools
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = sortingOrder;
-            canvasGO.AddComponent<CanvasScaler>();
+            UiTextTuning.ConfigureScaler(canvasGO.AddComponent<CanvasScaler>());
             canvasGO.AddComponent<GraphicRaycaster>();
             return canvasGO;
         }
@@ -703,40 +723,86 @@ namespace Lumen.EditorTools
 
         private static void EnsureBackgroundDecor()
         {
-            if (GameObject.Find("BackgroundDecor") != null) return;
+            var root = GameObject.Find("BackgroundDecor");
+            if (root == null) root = new GameObject("BackgroundDecor");
 
-            var root = new GameObject("BackgroundDecor");
+            // Decoracao distante e nao-interativa (sem colisor, sem quiz).
+            PlaceDecor(root.transform, "Sun.prefab", SunPosition, SunScale, rotate: false);
+            PlaceDecor(root.transform, "Nebula_00.prefab", new Vector3(-220f, 40f, 180f), 1f, rotate: false);
+            PlaceDecor(root.transform, "Mercury.prefab", MercuryPosition, PlanetScaleByPrefab["Mercury.prefab"] * DecorPlanetBoost, rotate: true);
+            PlaceDecor(root.transform, "Venus.prefab", VenusPosition, PlanetScaleByPrefab["Venus.prefab"] * DecorPlanetBoost, rotate: true);
+            PlaceDecor(root.transform, "Pluto.prefab", PlutoPosition, PlanetScaleByPrefab["Pluto.prefab"] * DecorPlanetBoost, rotate: true);
+            PlaceDecor(root.transform, "Moon.prefab", MoonPosition, PlanetScaleByPrefab["Moon.prefab"], rotate: true);
 
-            // So decoracao distante e nao-interativa.
-            InstantiateDecor("Sun.prefab", new Vector3(0f, 180f, 950f), root.transform, addRotation: false);
-            InstantiateDecor("Nebula_00.prefab", new Vector3(-220f, 40f, 180f), root.transform, addRotation: false);
+            EnsureSunLight(root.transform.Find("Sun"));
         }
 
-        private static void InstantiateDecor(string prefabFileName, Vector3 position, Transform parent, bool addRotation)
+        /// <summary>Cria (ou reposiciona) um item decorativo do pacote, sem colisor e sem o brilho pesado.</summary>
+        private static void PlaceDecor(Transform parent, string prefabFileName, Vector3 position, float scale, bool rotate)
         {
             string objName = prefabFileName.Replace(".prefab", "");
-            if (parent.Find(objName) != null) return;
+            Transform existing = parent.Find(objName);
+            GameObject instanceObj = existing != null ? existing.gameObject : null;
 
-            string path = $"{PlanetsPackPath}/Prefabs/{prefabFileName}";
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (prefab == null)
+            if (instanceObj == null)
             {
-                Debug.LogWarning($"[LUMEN] Não encontrei '{path}'. Pulei esse elemento de cenário.");
-                return;
+                string path = $"{PlanetsPackPath}/Prefabs/{prefabFileName}";
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"[LUMEN] Não encontrei '{path}'. Pulei esse elemento de cenário.");
+                    return;
+                }
+
+                instanceObj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                if (instanceObj == null) return;
+                instanceObj.name = objName;
+                instanceObj.transform.SetParent(parent, false);
+
+                foreach (var col in instanceObj.GetComponentsInChildren<Collider>())
+                    Object.DestroyImmediate(col);
+
+                if (rotate && instanceObj.GetComponent<SlowRotator>() == null)
+                    instanceObj.AddComponent<SlowRotator>();
             }
 
-            var instanceObj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            if (instanceObj == null) return;
-
-            instanceObj.name = objName;
-            instanceObj.transform.SetParent(parent, false);
             instanceObj.transform.position = position;
+            instanceObj.transform.localScale = Vector3.one * scale;
+            DisableHeavyEffects(instanceObj);
+        }
 
-            foreach (var col in instanceObj.GetComponentsInChildren<Collider>())
-                Object.DestroyImmediate(col);
+        /// <summary>Desliga os "Glow" (billboards enormes com transparencia): caros em GPU integrada.</summary>
+        private static void DisableHeavyEffects(GameObject root)
+        {
+            foreach (var ps in root.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                if (ps.transform == root.transform) continue;
+                ps.gameObject.SetActive(false);
+            }
+        }
 
-            if (addRotation)
-                instanceObj.AddComponent<SlowRotator>();
+        /// <summary>A Directional Light passa a vir do Sol (SunLight) e fica sem sombras.</summary>
+        private static void EnsureSunLight(Transform sun)
+        {
+            Light directional = null;
+            foreach (var light in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+                if (light.type == LightType.Directional) { directional = light; break; }
+
+            if (directional == null)
+            {
+                var go = new GameObject("Directional Light");
+                directional = go.AddComponent<Light>();
+                directional.type = LightType.Directional;
+            }
+
+            directional.shadows = LightShadows.None;
+
+            var sunLight = directional.GetComponent<SunLight>();
+            if (sunLight == null) sunLight = directional.gameObject.AddComponent<SunLight>();
+            if (sun != null) sunLight.SetSun(sun);
+
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.20f, 0.23f, 0.31f);
         }
 
         private static void EnsureAudioManager()
@@ -756,49 +822,78 @@ namespace Lumen.EditorTools
                 manager = go.AddComponent<AudioManager>();
             }
 
+            ApplyAudioAssignments(manager);
+        }
+
+        /// <summary>
+        /// Aplica as atribuicoes de audio (musicas e sons da nave) no AudioManager.
+        /// Chamado pelo menu de montagem E automaticamente ao apertar Play
+        /// (AudioAutoSetup). CORRIGE atribuicoes erradas, nao so preenche campos vazios.
+        /// </summary>
+        public static void ApplyAudioAssignments(AudioManager manager)
+        {
+            if (manager == null) return;
+
+            EnsureFolder("Assets/_Project/Audio", "Music");
+            EnsureFolder("Assets/_Project/Audio/Music", "Menu");
+
             AutoAssignMenuMusic(manager);
             AutoAssignGameplayMusic(manager);
             AutoAssignSfx(manager);
         }
 
-        /// <summary>
-        /// A trilha do MENU e qualquer AudioClip dentro da pasta dedicada
-        /// Assets/_Project/Audio/Music/Menu - nao depende de nome de arquivo,
-        /// so do local onde ele foi salvo.
-        /// </summary>
+        private static bool IsInFolder(AudioClip clip, string folder)
+        {
+            if (clip == null) return false;
+            return AssetDatabase.GetAssetPath(clip).StartsWith(folder + "/");
+        }
+
+        private static bool NameHasAny(AudioClip clip, params string[] keywords)
+        {
+            if (clip == null) return false;
+            string clipName = clip.name.ToLowerInvariant();
+            foreach (string keyword in keywords)
+                if (clipName.Contains(keyword)) return true;
+            return false;
+        }
+
+        /// <summary>A trilha do MENU e qualquer AudioClip da pasta Assets/_Project/Audio/Music/Menu.</summary>
         private static void AutoAssignMenuMusic(AudioManager manager)
         {
-            if (manager.HasMenuMusicClip) return;
+            if (IsInFolder(manager.MenuMusicClip, MenuMusicFolder)) return; // ja esta correta
 
             string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { MenuMusicFolder });
             if (guids.Length == 0)
             {
+                if (manager.HasMenuMusicClip) manager.SetMenuMusicClip(null); // atribuicao invalida
                 Debug.LogWarning($"[LUMEN] Nenhum AudioClip encontrado em '{MenuMusicFolder}' para a trilha da " +
-                                  "tela inicial. Coloque o arquivo de música do menu nessa pasta e rode o menu de novo.");
+                                  "tela inicial. Coloque o arquivo de música do menu nessa pasta e aperte Play de novo.");
                 return;
             }
 
             var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guids[0]));
             manager.SetMenuMusicClip(clip);
-            Debug.Log($"[LUMEN] Trilha do menu atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+            Debug.Log($"[LUMEN] Trilha do menu atribuída: {AssetDatabase.GetAssetPath(clip)}");
         }
 
         /// <summary>
-        /// A trilha da GAMEPLAY continua sendo procurada por palavra-chave em toda
-        /// a pasta de audio, exceto dentro da pasta dedicada do menu (para as duas
-        /// trilhas nunca acabarem apontando para o mesmo arquivo).
+        /// A trilha da GAMEPLAY e um clipe da pasta Assets/_Project/Audio/Music (fora da
+        /// subpasta Menu). Se o campo apontar para QUALQUER outro lugar (ex.: um efeito
+        /// sonoro), e corrigido.
         /// </summary>
         private static void AutoAssignGameplayMusic(AudioManager manager)
         {
-            if (manager.HasGameplayMusicClip) return;
+            var current = manager.GameplayMusicClip;
+            if (IsInFolder(current, MusicFolder) && !IsInFolder(current, MenuMusicFolder)) return; // ja esta correta
 
-            string[] allGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { AudioFolder });
+            string[] allGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { MusicFolder });
             string[] menuGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { MenuMusicFolder });
             var guids = System.Array.FindAll(allGuids, g => System.Array.IndexOf(menuGuids, g) < 0);
 
             if (guids.Length == 0)
             {
-                Debug.LogWarning($"[LUMEN] Nenhum AudioClip encontrado em '{AudioFolder}' (fora da pasta do menu) " +
+                if (manager.HasGameplayMusicClip) manager.SetGameplayMusicClip(null); // atribuicao invalida
+                Debug.LogWarning($"[LUMEN] Nenhum AudioClip encontrado em '{MusicFolder}' (fora da pasta Menu) " +
                                   "para a trilha da gameplay.");
                 return;
             }
@@ -807,12 +902,18 @@ namespace Lumen.EditorTools
                        ?? AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(guids[0]));
 
             manager.SetGameplayMusicClip(clip);
-            Debug.Log($"[LUMEN] Trilha da gameplay atribuída automaticamente: {AssetDatabase.GetAssetPath(clip)}");
+            string was = current != null ? $" (antes apontava para '{current.name}', que estava errado)" : "";
+            Debug.Log($"[LUMEN] Trilha da gameplay atribuída: {AssetDatabase.GetAssetPath(clip)}{was}");
         }
 
         private static void AutoAssignSfx(AudioManager manager)
         {
-            string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { AudioFolder });
+            // Efeitos: pasta Audio (sem a pasta Music, para uma trilha nunca virar efeito) + Resources/Audio.
+            var roots = new System.Collections.Generic.List<string> { AudioFolder };
+            if (AssetDatabase.IsValidFolder(ResourcesAudioFolder)) roots.Add(ResourcesAudioFolder);
+            string[] allSfx = AssetDatabase.FindAssets("t:AudioClip", roots.ToArray());
+            string[] musicGuids = AssetDatabase.FindAssets("t:AudioClip", new[] { MusicFolder });
+            string[] guids = System.Array.FindAll(allSfx, g => System.Array.IndexOf(musicGuids, g) < 0);
             if (guids.Length == 0) return;
 
             TryAssignSfx(manager.HasSelectSfx, manager.SetSelectSfx, guids, "Seleção",
@@ -823,6 +924,11 @@ namespace Lumen.EditorTools
                 "incorrect", "error", "wrong", "fail", "erro");
             TryAssignSfx(manager.HasCollectSfx, manager.SetCollectSfx, guids, "Coleta",
                 "collect", "pickup", "coin", "reward", "coleta", "fragment");
+            // Os loops da nave so contam como "ja atribuidos" se o nome do clipe confere.
+            TryAssignSfx(manager.HasThrustLoop && NameHasAny(manager.ThrustLoopClip, "thrust", "propuls", "engine", "motor"),
+                manager.SetThrustLoop, guids, "Propulsor da nave", "thrust", "propuls", "engine", "motor");
+            TryAssignSfx(manager.HasBoostLoop && NameHasAny(manager.BoostLoopClip, "boost", "turbo"),
+                manager.SetBoostLoop, guids, "Turbo da nave", "boost", "turbo");
         }
 
         private static void TryAssignSfx(bool alreadyAssigned, System.Action<AudioClip> setter,
@@ -956,6 +1062,16 @@ namespace Lumen.EditorTools
                     "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);
 
+            // 1b) Pool de perguntas: a original (_Quiz) + 10 extras por planeta (QuizBank).
+            //     O jogo sorteia uma a cada chegada, sem repetir ate acabarem.
+            AssignQuizPool(phaseNetuno, quizNetuno, "Netuno", QuizBank.Netuno);
+            AssignQuizPool(phaseUrano, quizUrano, "Urano", QuizBank.Urano);
+            AssignQuizPool(phaseSaturno, quizSaturno, "Saturno", QuizBank.Saturno);
+            AssignQuizPool(phaseJupiter, quizJupiter, "Jupiter", QuizBank.Jupiter);
+            AssignQuizPool(phaseMarte, quizMarte, "Marte", QuizBank.Marte);
+            AssignQuizPool(phaseTerra, quizTerra, "Terra", QuizBank.Terra);
+            AssetDatabase.SaveAssets();
+
             // 2) Planetas em rota ZIGUE-ZAGUE, compacta: o jogador e guiado planeta a planeta.
             var netuno = EnsurePlanet("Neptune.prefab", "Netuno_Encounter", NetunoPosition, phaseNetuno, 0);
             var urano  = EnsurePlanet("Uranus.prefab",  "Urano_Encounter",  UranoPosition, phaseUrano, 1);
@@ -971,6 +1087,31 @@ namespace Lumen.EditorTools
                 if (route[i] == null || route[i + 1] == null) continue;
                 route[i].SetNextPlanet(route[i + 1].transform);
             }
+        }
+
+        /// <summary>
+        /// Cria os assets das perguntas extras (se ainda nao existirem) e monta o
+        /// QuizPool do planeta: pergunta original primeiro, depois as do banco.
+        /// Seguro rodar varias vezes: assets existentes sao reaproveitados.
+        /// </summary>
+        private static void AssignQuizPool(PhaseData phase, QuizQuestionData original, string planetKey,
+            QuizEntry[] extras)
+        {
+            if (phase == null) return;
+
+            var pool = new System.Collections.Generic.List<QuizQuestionData>();
+            if (original != null) pool.Add(original);
+
+            for (int i = 0; i < extras.Length; i++)
+            {
+                var entry = extras[i];
+                string fileName = $"{planetKey}_Quiz_{i + 2:00}.asset"; // _Quiz.asset e a 1a pergunta
+                pool.Add(EnsureQuizAsset(fileName, entry.Question, entry.Options, 0,
+                    entry.CorrectFeedback, entry.IncorrectFeedback));
+            }
+
+            phase.QuizPool = pool.ToArray();
+            EditorUtility.SetDirty(phase);
         }
 
         private static void EnsureFolder(string parent, string newFolderName)
@@ -1025,6 +1166,7 @@ namespace Lumen.EditorTools
                 // e liga/atualiza o trigger da rota se ainda nao existir.
                 existing.transform.position = position;
                 ApplyPlanetScale(existing, prefabFileName);
+                DisableHeavyEffects(existing);
                 NormalizeEncounterTrigger(existing);
 
                 var trig = existing.GetComponent<PlanetApproachTrigger>();
@@ -1059,6 +1201,7 @@ namespace Lumen.EditorTools
             instanceObj.transform.position = position;
 
             ApplyPlanetScale(instanceObj, prefabFileName);
+            DisableHeavyEffects(instanceObj);
             instanceObj.AddComponent<SlowRotator>();
 
             foreach (var col in instanceObj.GetComponentsInChildren<Collider>())

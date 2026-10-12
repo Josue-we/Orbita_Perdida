@@ -9,9 +9,11 @@ namespace Lumen.Gameplay
     /// guardado), W/S avancam/recuam para onde ela aponta, Space/Ctrl sobem/descem,
     /// X freia, Shift e boost. Sem fisica de Rigidbody.
     ///
-    /// Quando o combustivel acaba a nave PARA no lugar e a tecla RescueKey devolve
-    /// o LUMEN ao ultimo ponto seguro com o tanque cheio, para a partida nunca
-    /// travar no meio do nada.
+    /// Publica o estado do propulsor (parado / ligado / turbo) no EventBus para o
+    /// AudioManager tocar o ronco certo, sem precisar conhecer este script.
+    ///
+    /// Quando o combustivel acaba a nave PARA e a tecla RescueKey devolve o LUMEN
+    /// ao ultimo ponto seguro com o tanque cheio.
     /// </summary>
     [RequireComponent(typeof(LumenEnergySystem))]
     public class LumenController : MonoBehaviour
@@ -50,6 +52,7 @@ namespace Lumen.Gameplay
         private LumenEnergySystem _energy;
         private bool _boundsOpened;
         private bool _boostEnabled;
+        private ShipThrustState _thrustState = ShipThrustState.Idle;
 
 #if !ENABLE_LEGACY_INPUT_MANAGER
         private bool _loggedInputWarning;
@@ -92,6 +95,7 @@ namespace Lumen.Gameplay
         private void OnDisable()
         {
             EventBus.OnTutorialCompleted -= HandleTutorialCompleted;
+            SetThrustState(ShipThrustState.Idle); // nunca deixa o ronco preso ligado
         }
 
         // Boost (Shift) so libera depois do tutorial terminar.
@@ -103,7 +107,11 @@ namespace Lumen.Gameplay
         private void Update()
         {
             if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameState.Playing)
-                return; // controle travado no menu, intro, desafio ou pausa
+            {
+                // Travado no menu, intro, desafio ou pausa: o propulsor silencia.
+                SetThrustState(ShipThrustState.Idle);
+                return;
+            }
 
             // Assim que a intro termina, o mapa inteiro fica aberto.
             if (!_boundsOpened)
@@ -115,6 +123,7 @@ namespace Lumen.Gameplay
             // Sem combustivel a nave nao se locomove: ela para e o resgate assume.
             if (_energy.IsEmpty)
             {
+                SetThrustState(ShipThrustState.Idle);
                 HandleOutOfFuel();
                 return;
             }
@@ -135,6 +144,12 @@ namespace Lumen.Gameplay
 
             bool isBraking = Input.GetKey(BrakeKey);
             bool isThrusting = Mathf.Abs(thrustZ) > 0.01f || Mathf.Abs(thrustY) > 0.01f;
+            bool boosting = _boostEnabled && Input.GetKey(KeyCode.LeftShift);
+
+            // Propulsor aceso (sem freio): ronco normal, ou turbo se Shift estiver apertado.
+            bool engineOn = isThrusting && !isBraking;
+            SetThrustState(!engineOn ? ShipThrustState.Idle
+                                     : (boosting ? ShipThrustState.Boosting : ShipThrustState.Thrusting));
 
             if (!isBraking)
             {
@@ -148,7 +163,7 @@ namespace Lumen.Gameplay
             _forwardSpeed *= Mathf.Exp(-dampZ * dt);
             _verticalSpeed *= Mathf.Exp(-dampY * dt);
 
-            float cap = (_boostEnabled && Input.GetKey(KeyCode.LeftShift)) ? boostSpeed : maxSpeed;
+            float cap = boosting ? boostSpeed : maxSpeed;
             float mag = new Vector2(_forwardSpeed, _verticalSpeed).magnitude;
             if (mag > cap)
             {
@@ -161,7 +176,15 @@ namespace Lumen.Gameplay
             transform.position = ClampToBounds(transform.position + velocity * dt);
 
             // Frear e girar nao queimam combustivel.
-            _energy.Tick(dt, isThrusting && !isBraking);
+            _energy.Tick(dt, engineOn);
+        }
+
+        /// <summary>Publica o estado do propulsor so quando ele muda (o audio escuta).</summary>
+        private void SetThrustState(ShipThrustState state)
+        {
+            if (state == _thrustState) return;
+            _thrustState = state;
+            EventBus.RaiseShipThrustChanged(state);
         }
 
         /// <summary>

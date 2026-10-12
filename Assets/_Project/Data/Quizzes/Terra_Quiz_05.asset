@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Terra_Quiz_05
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Do que \xE9 feita principalmente a atmosfera da Terra?"
+  Options:
+  - "Nitrog\xEAnio, cerca de 78%"
+  - "Oxig\xEAnio, cerca de 78%"
+  - "Di\xF3xido de carbono, cerca de 78%"
+  CorrectIndex: 0
+  CorrectFeedback: "Exato! O oxig\xEAnio vem em segundo lugar, com cerca de 21%."
+  IncorrectFeedback: "O oxig\xEAnio \xE9 essencial para n\xF3s, mas n\xE3o \xE9 o
+    g\xE1s mais abundante no ar."

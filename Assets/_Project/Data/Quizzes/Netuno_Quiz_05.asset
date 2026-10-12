@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Netuno_Quiz_05
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: O que ajuda a dar a Netuno a sua cor azul intensa?
+  Options:
+  - O metano na atmosfera, que absorve a luz vermelha
+  - "Oceanos de \xE1gua l\xEDquida na superf\xEDcie"
+  - "Poeira azul vinda dos an\xE9is"
+  CorrectIndex: 0
+  CorrectFeedback: "Isso! O metano absorve a luz vermelha e deixa o azul voltar para
+    o espa\xE7o."
+  IncorrectFeedback: "Netuno n\xE3o tem superf\xEDcie s\xF3lida nem oceanos. A cor
+    vem da atmosfera."

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Marte_Quiz_03
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Marte abriga o maior vulc\xE3o conhecido do Sistema Solar. Qual \xE9
+    o nome dele?"
+  Options:
+  - Monte Olimpo
+  - Monte Everest
+  - Mauna Kea
+  CorrectIndex: 0
+  CorrectFeedback: Correto! O Monte Olimpo tem cerca de 22 km de altura, uns 2,5
+    vezes o Everest.
+  IncorrectFeedback: "O Everest e o Mauna Kea ficam na Terra e s\xE3o bem menores."

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Netuno_Quiz_04
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Qual \xE9 a maior lua de Netuno, que gira em sentido contr\xE1rio ao
+    do planeta?"
+  Options:
+  - "Trit\xE3o"
+  - "Tit\xE3"
+  - Europa
+  CorrectIndex: 0
+  CorrectFeedback: "Exato! Trit\xE3o tem \xF3rbita retr\xF3grada, e muitos cientistas
+    acham que ele foi capturado do Cintur\xE3o de Kuiper."
+  IncorrectFeedback: "Tit\xE3 \xE9 de Saturno e Europa \xE9 de J\xFApiter. A lua
+    de Netuno tem nome de um filho do deus dos mares."

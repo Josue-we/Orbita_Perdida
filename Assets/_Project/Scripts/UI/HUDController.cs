@@ -7,8 +7,8 @@ namespace Lumen.UI
 {
     /// <summary>
     /// HUD principal: barra de COMBUSTÍVEL (drena com os propulsores acesos e
-    /// zera = LUMEN parado + resgate), barra de SINAL com a Terra (sobe conforme
-    /// fragmentos sao coletados), objetivo atual, contador de fragmentos e a
+    /// zera = LUMEN parado + resgate), barra de SINAL com a Terra (restabelecido
+    /// a cada fragmento coletado), objetivo atual, contador de fragmentos e a
     /// seta de navegacao. O painel de quiz e a legenda da NOVA sao componentes
     /// separados.
     /// </summary>
@@ -20,6 +20,10 @@ namespace Lumen.UI
         // saber que a nave esta prestes a parar (e nao entender do nada).
         private const float LowFuelThreshold = 0.25f;
         private const float RescueBannerSeconds = 4f;
+
+        // Velocidade (em pontos de % por segundo) com que a barra de sinal sobe
+        // ate o novo valor: cada fragmento "restabelece" o sinal a olhos vistos.
+        private const float SignalRiseSpeed = 30f;
 
         [Header("Barras (canto superior esquerdo)")]
         [SerializeField] private Slider signalBar;   // sinal com a Terra
@@ -44,6 +48,8 @@ namespace Lumen.UI
 
         private int _fragmentsCollected;
         private bool _tutorialDone;
+        private bool _missionComplete;
+        private float _displayedSignal = GameTuning.SignalBase;
         private float _tutorialCompleteBannerTimer;
         private float _rescueBannerTimer;
 
@@ -57,9 +63,116 @@ namespace Lumen.UI
         private bool _navigationActive;
         private Camera _cam;
 
-        private Transform _planetTransform;
-        private float _signalRefDistance = 1f;
         private Transform _gateTransform;
+
+        private void Awake()
+        {
+            ApplyTextTuning();
+            BuildArrowGraphic();
+        }
+
+        /// <summary>
+        /// Troca o triangulo de texto (todos os lados iguais, sem direcao clara) por uma
+        /// SETA de verdade: haste + ponta, com contorno. O Text antigo fica desligado e a seta
+        /// gira junto com o mesmo objeto, entao nada mais na logica muda.
+        /// </summary>
+        private void BuildArrowGraphic()
+        {
+            if (navArrow == null) return;
+
+            navArrow.enabled = false;
+            var host = navArrow.rectTransform;
+            host.sizeDelta = new Vector2(40f, 54f);
+
+            var existing = host.Find("ArrowGraphic");
+            if (existing != null) return;
+
+            var go = new GameObject("ArrowGraphic", typeof(RectTransform));
+            go.transform.SetParent(host, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            var image = go.AddComponent<Image>();
+            image.sprite = CreateArrowSprite();
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = new Color(0.62f, 0.93f, 1f, 0.78f);
+
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0.05f, 0.1f, 0.35f);
+            shadow.effectDistance = new Vector2(0f, -2f);
+        }
+
+        /// <summary>
+        /// Seta SUAVE apontando para cima, desenhada por codigo: tracos finos com pontas
+        /// arredondadas (haste + "v" da ponta), com borda anti-serrilhada.
+        /// </summary>
+        private static Sprite CreateArrowSprite()
+        {
+            const int w = 96, h = 128;
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+
+            var tip = new Vector2(48f, 108f);
+            var pixels = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    var p = new Vector2(x + 0.5f, y + 0.5f);
+                    float d = Min3(
+                        DistToSegment(p, new Vector2(48f, 22f), tip),          // haste
+                        DistToSegment(p, tip, new Vector2(16f, 66f)),          // asa esquerda
+                        DistToSegment(p, tip, new Vector2(80f, 66f)));         // asa direita
+
+                    const float radius = 7f;
+                    float alpha = Mathf.Clamp01(radius + 0.5f - d);            // 1px de suavizacao
+                    pixels[y * w + x] = new Color32(255, 255, 255, (byte)(255f * alpha));
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        private static float DistToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+            return Vector2.Distance(p, a + ab * t);
+        }
+
+        private static float Min3(float a, float b, float c) => Mathf.Min(a, Mathf.Min(b, c));
+
+        /// <summary>Fontes maiores aplicadas em runtime (valem em cena ja montada).</summary>
+        private void ApplyTextTuning()
+        {
+            // Barras e legendas maiores, empilhadas no canto superior esquerdo.
+            UiTextTuning.SetAnchors(signalLabel != null ? signalLabel.rectTransform : null, new Vector2(0.02f, 0.945f), new Vector2(0.34f, 0.99f));
+            UiTextTuning.SetAnchors(signalBar != null ? signalBar.transform as RectTransform : null, new Vector2(0.02f, 0.885f), new Vector2(0.34f, 0.94f));
+            UiTextTuning.SetAnchors(energyLabel != null ? energyLabel.rectTransform : null, new Vector2(0.02f, 0.825f), new Vector2(0.34f, 0.87f));
+            UiTextTuning.SetAnchors(energyBar != null ? energyBar.transform as RectTransform : null, new Vector2(0.02f, 0.765f), new Vector2(0.34f, 0.82f));
+            if (fragmentsLabel != null)
+                UiTextTuning.SetAnchors(fragmentsLabel.rectTransform, new Vector2(0.60f, 0.92f), new Vector2(0.98f, 0.99f));
+
+            UiTextTuning.Apply(signalLabel, GameTuning.HudLabelFontSize);
+            UiTextTuning.Apply(energyLabel, GameTuning.HudLabelFontSize);
+            UiTextTuning.Apply(signalPercentText, GameTuning.HudPercentFontSize, 12);
+            UiTextTuning.Apply(energyPercentText, GameTuning.HudPercentFontSize, 12);
+            UiTextTuning.Apply(fragmentsLabel, GameTuning.HudFragmentsFontSize);
+
+            if (objectiveLabel != null)
+            {
+                // Um pouco mais alta para caber ate 4 linhas com a fonte maior.
+                UiTextTuning.SetAnchors(objectiveLabel.rectTransform, new Vector2(0.02f, 0.02f), new Vector2(0.88f, 0.17f));
+                UiTextTuning.Apply(objectiveLabel, GameTuning.HudObjectiveFontSize);
+            }
+        }
 
         private void OnEnable()
         {
@@ -90,30 +203,17 @@ namespace Lumen.UI
                                       "X para frear. " +
                                       "Siga PARA A FRENTE até o FAROL ao longe para concluir o tutorial.";
 
-            // Referencia espacial do 1o planeta: usada para o sinal crescer
-            // conforme a nave se aproxima (barra dinamica), e para o prompt do tutorial.
-            var planet = Object.FindFirstObjectByType<PlanetApproachTrigger>();
-            if (planet != null)
-            {
-                _planetTransform = planet.transform;
-
-                Vector3 refPos = transform.position;
-                var lumen = GameObject.Find("LUMEN");
-                if (lumen != null) refPos = lumen.transform.position;
-                _signalRefDistance = Mathf.Max(1f, Vector3.Distance(refPos, _planetTransform.position));
-            }
-
             var gate = GameObject.Find("TutorialExit");
             if (gate != null) _gateTransform = gate.transform;
 
+            _displayedSignal = TargetSignal;
             UpdateSignalBar();
             UpdateFragmentsLabel();
         }
 
         private void LateUpdate()
         {
-            // Sinal e combustivel sao recalculados a cada quadro: a barra de sinal
-            // cresce conforme a nave se aproxima do planeta, entao nunca fica parada.
+            // O sinal anima ate o valor-alvo (que so cresce com os fragmentos).
             UpdateSignalBar();
 
             // Combustivel zerado: o LUMEN esta parado esperando o resgate, e isso
@@ -215,19 +315,17 @@ namespace Lumen.UI
         {
             _fragmentsCollected++;
             UpdateFragmentsLabel();
-            UpdateSignalBar();
 
             // Seta foi usada: esconde e prepara o proximo rumo (fases futuras).
             _navigationActive = false;
             _navigationTarget = null;
             if (navArrow != null) navArrow.gameObject.SetActive(false);
-            SetObjective($"Fragmento de {planetName} coletado! Energia restaurada.");
+            SetObjective($"Fragmento de {planetName} coletado! Energia restaurada e sinal com a Terra mais forte.");
         }
 
         private void HandleTutorialCompleted()
         {
             _tutorialDone = true;
-            UpdateSignalBar();
 
             // Aviso claro: o tutorial acabou e o jogo comecou. A seta e o boost
             // sao liberados juntos (o LUMEN escuta o mesmo evento).
@@ -273,6 +371,7 @@ namespace Lumen.UI
 
         private void HandleMissionComplete()
         {
+            _missionComplete = true;
             _navigationActive = false;
             _navigationTarget = null;
             if (navArrow != null) navArrow.gameObject.SetActive(false);
@@ -280,37 +379,28 @@ namespace Lumen.UI
         }
 
         /// <summary>
-        /// Sinal com a Terra: comeca fraco (5%), ganha base ao concluir o tutorial,
-        /// cresce em tempo real conforme a nave se aproxima do planeta e dispara a
-        /// cada fragmento coletado, ate restaurar 100% de conexao.
+        /// Valor-alvo do sinal com a Terra. NAO depende de distancia: so cresce,
+        /// 5% no inicio + 18% a cada fragmento coletado (95% com os 5 fragmentos)
+        /// e 100% ao concluir a missao. Como o alvo nunca diminui, a barra tambem nunca.
         /// </summary>
+        private float TargetSignal =>
+            _missionComplete
+                ? 100f
+                : Mathf.Min(100f, GameTuning.SignalBase + _fragmentsCollected * GameTuning.SignalPerFragment);
+
         private void UpdateSignalBar()
         {
             if (signalBar == null) return;
 
+            // MoveTowards em direcao a um alvo que so sobe: animacao suave, sem recuar.
+            _displayedSignal = Mathf.MoveTowards(_displayedSignal, TargetSignal,
+                SignalRiseSpeed * Time.unscaledDeltaTime);
+
             signalBar.maxValue = 100f;
-            float signal = 5f;
-
-            if (_tutorialDone) signal += 10f;
-
-            if (_planetTransform != null && _signalRefDistance > 0f)
-            {
-                if (_cam == null) _cam = Camera.main;
-                if (_cam != null)
-                {
-                    float dist = Vector3.Distance(_cam.transform.position, _planetTransform.position);
-                    float proximity = Mathf.Clamp01(1f - dist / _signalRefDistance);
-                    signal += proximity * 50f;
-                }
-            }
-
-            signal += _fragmentsCollected * 15f;
-            signal = Mathf.Max(0f, Mathf.Min(100f, signal));
-
-            signalBar.value = signal;
-            SetFill(_signalFill, signal, 100f);
+            signalBar.value = _displayedSignal;
+            SetFill(_signalFill, _displayedSignal, 100f);
             if (signalPercentText != null)
-                signalPercentText.text = $"{Mathf.RoundToInt(signal)}%";
+                signalPercentText.text = $"{Mathf.RoundToInt(_displayedSignal)}%";
         }
 
         private static void SetFill(Image fill, float current, float max)

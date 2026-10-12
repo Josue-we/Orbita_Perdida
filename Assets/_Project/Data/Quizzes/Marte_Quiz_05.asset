@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Marte_Quiz_05
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Qual foi o primeiro rover a explorar Marte, em 1997?
+  Options:
+  - Sojourner
+  - Curiosity
+  - Opportunity
+  CorrectIndex: 0
+  CorrectFeedback: "Exato! O Sojourner chegou a bordo da miss\xE3o Mars Pathfinder."
+  IncorrectFeedback: Curiosity e Opportunity vieram anos depois, em 2012 e 2004.

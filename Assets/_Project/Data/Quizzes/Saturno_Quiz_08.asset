@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Saturno_Quiz_08
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Em 1610, Galileu viu Saturno com um telesc\xF3pio simples e achou que
+    o planeta tinha 'orelhas'. O que ele estava vendo?"
+  Options:
+  - "Os an\xE9is, que o telesc\xF3pio dele n\xE3o mostrava com nitidez"
+  - Duas luas gigantes coladas ao planeta
+  - Dois planetas menores ao lado
+  CorrectIndex: 0
+  CorrectFeedback: "Isso! S\xF3 d\xE9cadas depois Christiaan Huygens percebeu que
+    eram an\xE9is."
+  IncorrectFeedback: As 'orelhas' eram a parte mais famosa do planeta, que hoje vemos
+    com clareza.

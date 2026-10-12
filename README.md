@@ -75,7 +75,8 @@ com folga, mas não para atravessar a rota inteira voando reto.
 ## A rota
 
 A rota é **zigue-zague** de propósito: a seta guia o LUMEN planeta a planeta, e
-não existe atalho em linha reta até a Terra.
+não existe atalho em linha reta até a Terra. A nave é rápida (cerca de 36 u/s, 96 u/s
+com boost), então os planetas ficam bem afastados uns dos outros.
 
 | # | Planeta | O que o quiz pergunta |
 | --- | --- | --- |
@@ -86,10 +87,14 @@ não existe atalho em linha reta até a Terra.
 | 5 | Marte | Por que a superfície é vermelha (óxido de ferro) |
 | 6 | Terra | O que torna a Terra o único mundo com água líquida e vida |
 
+Além dos mundos da rota, o céu tem o **Sol** (que é a fonte de luz da cena),
+Mercúrio, Vênus, a Lua e Plutão — sem quiz, só para dar mais realismo ao Sistema Solar.
+
 A cada aproximação, a NOVA narra o que você está vendo e o desafio aparece. Errar
 não penaliza: você tenta de novo até acertar. Acertando, o fragmento é
 coletado, o tanque se reenche e a seta aponta o próximo mundo. A missão acaba no
-quiz da Terra.
+quiz da Terra, que abre a **tela de final de jogo**: resumo do sinal e dos fragmentos,
+as curiosidades coletadas e os botões **Jogar novamente** e **Sair**.
 
 ## Rodando o jogo
 
@@ -109,6 +114,17 @@ Precisa do **Unity 6 (URP)**. Antes de abrir a cena:
 O botão **Jogar** (ou `Enter`) abre a introdução; a partir daí o LUMEN está no
 seu controle.
 
+## Desempenho
+
+O jogo precisa rodar em máquinas **sem placa de vídeo dedicada**. Por isso as
+sombras ficam desligadas, os efeitos de partículas "Glow" dos planetas são removidos
+na carga da cena e a taxa de quadros é limitada a 60 FPS (`PerformanceTuning`).
+
+## Atalhos de teste (só no Editor)
+
+Durante o Play no Editor, `F1`–`F4` teleportam a nave para Saturno, Júpiter, Marte e
+Terra (`DebugTeleport`). Isso não existe no build.
+
 ## Editando o conteúdo do jogo
 
 Todo o texto — falas da NOVA, perguntas, alternativas e feedbacks — fica em
@@ -119,6 +135,6 @@ Inspector e editar, sem mexer em código.
 
 - [ ] Minigames próprios de Saturno e Júpiter (hoje usam o mesmo quiz)
 - [ ] Modelo 3D do LUMEN (hoje é uma cápsula simples)
-- [ ] Tela de final de jogo
+- [ ] Tela de final de jogo definitiva (hoje é um protótipo)
 
 Feedback de erros no Console do Unity é bem-vindo.

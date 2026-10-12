@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Jupiter_Quiz_03
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Quais s\xE3o as quatro grandes luas que Galileu descobriu perto de J\xFApiter
+    em 1610?"
+  Options:
+  - Io, Europa, Ganimedes e Calisto
+  - "Tit\xE3, Enc\xE9lado, Mimas e Reia"
+  - "Fobos, Deimos, Trit\xE3o e Caronte"
+  CorrectIndex: 0
+  CorrectFeedback: "Isso! Elas s\xE3o chamadas de luas galileanas."
+  IncorrectFeedback: "Essas outras luas pertencem a Saturno, Marte, Netuno e Plut\xE3o."

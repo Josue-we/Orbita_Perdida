@@ -29,6 +29,15 @@ namespace Lumen.Narrative
             "Reative os propulsores e prossiga.",
         };
 
+        private void Awake()
+        {
+            // Fonte grande e caixa mais alta, aplicadas em runtime (valem em cena ja montada).
+            if (logText != null)
+                UiTextTuning.SetAnchors(logText.rectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.94f, 0.78f));
+
+            UiTextTuning.Apply(logText, GameTuning.IntroFontSize);
+        }
+
         private void Start()
         {
             if (panelRoot != null) panelRoot.SetActive(false);

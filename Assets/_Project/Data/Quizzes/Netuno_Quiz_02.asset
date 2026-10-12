@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Netuno_Quiz_02
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: Netuno foi encontrado em 1846 de um jeito muito especial. Como isso aconteceu?
+  Options:
+  - "Sua posi\xE7\xE3o foi calculada com matem\xE1tica antes de ele ser visto no
+    telesc\xF3pio"
+  - Foi visto a olho nu por navegantes da Antiguidade
+  - Uma sonda espacial o encontrou primeiro
+  CorrectIndex: 0
+  CorrectFeedback: "Isso mesmo! Urbain Le Verrier calculou onde ele deveria estar
+    e Johann Galle o achou no c\xE9u em 1846."
+  IncorrectFeedback: "Quase... pense nos c\xE1lculos feitos a partir das \xF3rbitas
+    estranhas de Urano."

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Terra_Quiz_02
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Qual \xE9 a idade aproximada da Terra?"
+  Options:
+  - "Cerca de 4,5 bilh\xF5es de anos"
+  - "Cerca de 4,5 milh\xF5es de anos"
+  - "Cerca de 450 milh\xF5es de anos"
+  CorrectIndex: 0
+  CorrectFeedback: "Correto! A Terra se formou h\xE1 cerca de 4,5 bilh\xF5es de anos."
+  IncorrectFeedback: "A Terra \xE9 bem mais velha que isso. Pense em bilh\xF5es."

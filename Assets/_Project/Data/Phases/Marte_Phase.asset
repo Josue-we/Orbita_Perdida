@@ -15,7 +15,19 @@ MonoBehaviour:
   PlanetName: Marte
   NarrationLines:
   - Aproximando de Marte.
-  - O planeta vermelho, coberto por óxido de ferro.
-  - Foi aqui que rovers já exploraram a superfície.
+  - "O planeta vermelho, coberto por \xF3xido de ferro."
+  - "Foi aqui que rovers j\xE1 exploraram a superf\xEDcie."
   Quiz: {fileID: 11400000, guid: f46b85c83d9b13543b023229eb8c9874, type: 2}
+  QuizPool:
+  - {fileID: 11400000, guid: f46b85c83d9b13543b023229eb8c9874, type: 2}
+  - {fileID: 11400000, guid: 8b85e8c1ea8e81f489515ebe3b050468, type: 2}
+  - {fileID: 11400000, guid: 6851765a86fd4b64fb8a5ba1c3eab7a6, type: 2}
+  - {fileID: 11400000, guid: 14c12bdf1437a244ab60e0080def69e6, type: 2}
+  - {fileID: 11400000, guid: 7e85adf0cb591c240a74fa3b468015c8, type: 2}
+  - {fileID: 11400000, guid: b1369247ac7393d4daf82bc20808d6fd, type: 2}
+  - {fileID: 11400000, guid: 7b0a36de185c0eb40a9f3e1a3fbe6bf8, type: 2}
+  - {fileID: 11400000, guid: 73f218a37c9a3c6409d56b9dd900be70, type: 2}
+  - {fileID: 11400000, guid: 29a981b92a12eb14f8d066e5c024c09f, type: 2}
+  - {fileID: 11400000, guid: afb04cacc0fe29b4b88aebed5946b95a, type: 2}
+  - {fileID: 11400000, guid: 118ab028f9feab7488facf2752c1a41a, type: 2}
   FragmentEnergyReward: 75

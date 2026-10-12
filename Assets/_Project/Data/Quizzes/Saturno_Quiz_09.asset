@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Saturno_Quiz_09
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Os an\xE9is de Saturno se estendem por milhares de quil\xF4metros. Qual
+    \xE9 a espessura deles?"
+  Options:
+  - "Muito finos: cerca de 10 metros em muitas regi\xF5es"
+  - "Milhares de quil\xF4metros de espessura"
+  - "Cerca de 100 quil\xF4metros"
+  CorrectIndex: 0
+  CorrectFeedback: "Certo! S\xE3o largos como um planeta e finos como uma folha,
+    em escala."
+  IncorrectFeedback: "Eles s\xE3o extremamente achatados, bem mais finos do que largos."

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Jupiter_Quiz_04
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: "Qual lua de J\xFApiter tem mais vulc\xF5es ativos do que qualquer outro
+    corpo do Sistema Solar?"
+  Options:
+  - Io
+  - Europa
+  - Calisto
+  CorrectIndex: 0
+  CorrectFeedback: "Certo! A gravidade de J\xFApiter espreme Io, e esse calor alimenta
+    os vulc\xF5es."
+  IncorrectFeedback: "Europa e Calisto s\xE3o geladas. A lua vulc\xE2nica \xE9 a
+    mais pr\xF3xima de J\xFApiter entre as quatro grandes."

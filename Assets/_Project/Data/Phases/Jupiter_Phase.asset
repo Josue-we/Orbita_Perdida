@@ -12,10 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3704698eebfe19a46869d73a9720a44f, type: 3}
   m_Name: Jupiter_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
-  PlanetName: Júpiter
+  PlanetName: "J\xFApiter"
   NarrationLines:
-  - Aproximando de Júpiter.
-  - O maior planeta de todos — sua Grande Mancha Vermelha é uma tempestade maior que a Terra.
-  - 'Não há superfície sólida: é um gigante gasoso.'
+  - "Aproximando de J\xFApiter."
+  - "O maior planeta de todos \u2014 sua Grande Mancha Vermelha \xE9 uma tempestade
+    maior que a Terra."
+  - "N\xE3o h\xE1 superf\xEDcie s\xF3lida: \xE9 um gigante gasoso."
   Quiz: {fileID: 11400000, guid: 816a6561fbe0ce84ab16a5e04e2e38a6, type: 2}
+  QuizPool:
+  - {fileID: 11400000, guid: 816a6561fbe0ce84ab16a5e04e2e38a6, type: 2}
+  - {fileID: 11400000, guid: 424aa67a555d9f24e811342241b6aae8, type: 2}
+  - {fileID: 11400000, guid: 11fba960346ad1f4581134fa14acf3d4, type: 2}
+  - {fileID: 11400000, guid: 23777d18e0715d34a9261f474aa14a4b, type: 2}
+  - {fileID: 11400000, guid: d05a0db2f924a7c4b99e72f312dbb591, type: 2}
+  - {fileID: 11400000, guid: 397fb2bad0138cc4eba2b6f83bbec427, type: 2}
+  - {fileID: 11400000, guid: fbb170a4f6809db41aa5b5c4dacda771, type: 2}
+  - {fileID: 11400000, guid: 612a173f93cd21149b70e91d81b7e2bc, type: 2}
+  - {fileID: 11400000, guid: ecac92494a8bf024b8a0786005739428, type: 2}
+  - {fileID: 11400000, guid: 400e183f101764c4f9697df236e7865b, type: 2}
+  - {fileID: 11400000, guid: b7ef00e128786f24f9a8af709521cc78, type: 2}
   FragmentEnergyReward: 75

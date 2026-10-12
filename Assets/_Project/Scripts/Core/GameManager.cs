@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Lumen.Core
 {
@@ -9,7 +10,8 @@ namespace Lumen.Core
         Intro,
         Playing,
         Paused,
-        Challenge
+        Challenge,
+        Ended      // missao concluida: tela final
     }
 
     /// <summary>
@@ -41,6 +43,23 @@ namespace Lumen.Core
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        /// <summary>"Jogar novamente": a cena recarrega e o jogo volta para a tela inicial, zerado.</summary>
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (Instance != this) return;
+            Time.timeScale = 1f;
+            CurrentState = GameState.Menu;
+            HasRescuePoint = false;
+            RescueLabel = "a base";
+            EventBus.ResetSession();
         }
 
         private void Start()

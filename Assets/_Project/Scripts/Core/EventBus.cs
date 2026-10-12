@@ -3,6 +3,14 @@ using UnityEngine;
 
 namespace Lumen.Core
 {
+    /// <summary>Estado do propulsor da nave, usado pelo audio (ronco normal x turbo).</summary>
+    public enum ShipThrustState
+    {
+        Idle,       // parada, freando, travada (menu/quiz/pausa) ou sem combustivel
+        Thrusting,  // propulsores acesos
+        Boosting    // propulsores acesos com Shift (turbo)
+    }
+
     /// <summary>
     /// Canal central de eventos do jogo. Sistemas publicam e assinam eventos aqui
     /// em vez de se referenciarem diretamente — por exemplo, o LUMEN não precisa
@@ -22,9 +30,16 @@ namespace Lumen.Core
         public static event Action OnQuizOpened;
         public static event Action OnQuizClosed;
         public static event Action OnGameStarted; // jogador clicou "Jogar" no menu inicial
+        public static event Action<ShipThrustState> OnShipThrustChanged; // so dispara quando muda
 
         /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
         public static bool TutorialCompleted { get; private set; }
+
+        /// <summary>Zera o estado da partida (usado ao reiniciar o jogo pela tela final).</summary>
+        public static void ResetSession()
+        {
+            TutorialCompleted = false;
+        }
 
         public static void RaiseEnergyChanged(float current, float max)
         {
@@ -87,6 +102,11 @@ namespace Lumen.Core
         public static void RaiseGameStarted()
         {
             OnGameStarted?.Invoke();
+        }
+
+        public static void RaiseShipThrustChanged(ShipThrustState state)
+        {
+            OnShipThrustChanged?.Invoke(state);
         }
     }
 }

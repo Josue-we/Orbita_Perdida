@@ -8,11 +8,10 @@ using Lumen.Data;
 namespace Lumen.Gameplay.Challenges
 {
     /// <summary>
-    /// Desafio de quiz: mostra a pergunta e as alternativas de PhaseData.Quiz,
-    /// e so chama onCompleted quando o jogador acerta (pode tentar de novo em
-    /// caso de erro, sem penalidade). Esta e a MESMA classe usada por Netuno,
-    /// Urano e Marte - a unica coisa que muda entre eles e o QuizQuestionData
-    /// atribuido ao PhaseData de cada um.
+    /// Desafio de quiz: sorteia uma pergunta do pool do planeta (PhaseData.PickQuiz),
+    /// embaralha a ordem das alternativas e so chama onCompleted quando o jogador
+    /// acerta (pode tentar de novo em caso de erro, sem penalidade). E a MESMA
+    /// classe usada por todos os planetas - o que muda e o pool de cada PhaseData.
     /// </summary>
     public class QuizChallengeController : MonoBehaviour, IPhaseChallenge
     {
@@ -25,17 +24,61 @@ namespace Lumen.Gameplay.Challenges
         private QuizQuestionData _data;
         private Action _onCompleted;
 
+        // Alternativas na ordem EMBARALHADA desta rodada (o asset guarda a certa
+        // sempre na posicao CorrectIndex; aqui ela muda de lugar a cada vez).
+        private string[] _options;
+        private int _correctIndex;
+
+        private void Awake()
+        {
+            ApplyTextTuning();
+        }
+
+        /// <summary>Fontes e caixa maiores, aplicadas em runtime (valem em cena ja montada).</summary>
+        private void ApplyTextTuning()
+        {
+            if (panelRoot != null)
+                UiTextTuning.SetAnchors(panelRoot.transform as RectTransform,
+                    GameTuning.QuizPanelAnchorMin, GameTuning.QuizPanelAnchorMax);
+
+            // Layout interno maior (pergunta no topo, 3 alternativas altas, feedback embaixo).
+            if (questionText != null)
+                UiTextTuning.SetAnchors(questionText.rectTransform, GameTuning.QuizQuestionMin, GameTuning.QuizQuestionMax);
+            if (feedbackText != null)
+                UiTextTuning.SetAnchors(feedbackText.rectTransform, GameTuning.QuizFeedbackMin, GameTuning.QuizFeedbackMax);
+
+            if (optionButtons != null)
+            {
+                for (int i = 0; i < optionButtons.Length && i < GameTuning.QuizOptionTops.Length; i++)
+                {
+                    if (optionButtons[i] == null) continue;
+                    float top = GameTuning.QuizOptionTops[i];
+                    UiTextTuning.SetAnchors(optionButtons[i].transform as RectTransform,
+                        new Vector2(0.06f, top - GameTuning.QuizOptionHeight), new Vector2(0.94f, top));
+                }
+            }
+
+            UiTextTuning.Apply(questionText, GameTuning.QuizQuestionFontSize);
+            UiTextTuning.Apply(feedbackText, GameTuning.QuizFeedbackFontSize);
+
+            if (optionLabels == null) return;
+            foreach (var label in optionLabels)
+                UiTextTuning.Apply(label, GameTuning.QuizOptionFontSize);
+        }
+
         public void StartChallenge(PhaseData phase, Action onCompleted)
         {
-            _data = phase.Quiz;
+            _data = phase.PickQuiz();
             _onCompleted = onCompleted;
 
-            if (_data == null)
+            if (_data == null || _data.Options == null || _data.Options.Length == 0)
             {
-                Debug.LogWarning($"[LUMEN] {phase.PlanetName} não tem QuizQuestionData atribuído em PhaseData.");
+                Debug.LogWarning($"[LUMEN] {phase.PlanetName} não tem pergunta válida (Quiz Pool/Quiz) em PhaseData.");
                 onCompleted?.Invoke();
                 return;
             }
+
+            ShuffleOptions();
 
             panelRoot.SetActive(true);
             questionText.text = _data.Question;
@@ -46,15 +89,39 @@ namespace Lumen.Gameplay.Challenges
             EventBus.RaiseQuizOpened();
         }
 
+        /// <summary>Embaralha as alternativas (Fisher-Yates) e descobre onde a certa foi parar.</summary>
+        private void ShuffleOptions()
+        {
+            int n = _data.Options.Length;
+            var order = new int[n];
+            for (int i = 0; i < n; i++) order[i] = i;
+
+            for (int i = n - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                int tmp = order[i];
+                order[i] = order[j];
+                order[j] = tmp;
+            }
+
+            _options = new string[n];
+            _correctIndex = 0;
+            for (int i = 0; i < n; i++)
+            {
+                _options[i] = _data.Options[order[i]];
+                if (order[i] == _data.CorrectIndex) _correctIndex = i;
+            }
+        }
+
         private void SetupOptions()
         {
             for (int i = 0; i < optionButtons.Length; i++)
             {
-                bool hasOption = i < _data.Options.Length;
+                bool hasOption = i < _options.Length;
                 optionButtons[i].gameObject.SetActive(hasOption);
                 if (!hasOption) continue;
 
-                optionLabels[i].text = _data.Options[i];
+                optionLabels[i].text = _options[i];
 
                 int index = i; // captura local - evita o bug classico de closure em loop
                 optionButtons[i].onClick.RemoveAllListeners();
@@ -67,12 +134,12 @@ namespace Lumen.Gameplay.Challenges
         {
             EventBus.RaiseOptionSelected();
 
-            if (index == _data.CorrectIndex)
+            if (index == _correctIndex)
             {
                 feedbackText.text = _data.CorrectFeedback;
                 EventBus.RaiseAnswerCorrect();
                 foreach (var btn in optionButtons) btn.interactable = false;
-                StartCoroutine(FinishAfterDelay(1.5f));
+                StartCoroutine(FinishAfterDelay(2.5f)); // um pouco mais de tempo para ler a curiosidade maior
             }
             else
             {

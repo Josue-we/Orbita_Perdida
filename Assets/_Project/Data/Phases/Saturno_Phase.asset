@@ -15,7 +15,19 @@ MonoBehaviour:
   PlanetName: Saturno
   NarrationLines:
   - Aproximando de Saturno.
-  - 'O gigante dos anéis: bilhões de fragmentos de gelo e rocha.'
-  - Você está passando pelo planeta mais fotogênico do Sistema Solar.
+  - "O gigante dos an\xE9is: bilh\xF5es de fragmentos de gelo e rocha."
+  - "Voc\xEA est\xE1 passando pelo planeta mais fotog\xEAnico do Sistema Solar."
   Quiz: {fileID: 11400000, guid: 3971845d493885a4098ef01a68947d91, type: 2}
+  QuizPool:
+  - {fileID: 11400000, guid: 3971845d493885a4098ef01a68947d91, type: 2}
+  - {fileID: 11400000, guid: 6868e35d8d9d6384d812f168008ae6cd, type: 2}
+  - {fileID: 11400000, guid: cd83ae4ac6007aa49929bba866e5e2c9, type: 2}
+  - {fileID: 11400000, guid: 0ca816dc6df3d20469124f1233135425, type: 2}
+  - {fileID: 11400000, guid: 35385b160de141f488e92bc7915bb37e, type: 2}
+  - {fileID: 11400000, guid: 14b512559d08a214eb6d6596b406bb92, type: 2}
+  - {fileID: 11400000, guid: d6643d92afc5e3a44ae6e7234db2cfca, type: 2}
+  - {fileID: 11400000, guid: e95cd80f79203b545aadbca94c9dd6d6, type: 2}
+  - {fileID: 11400000, guid: a8c8a32753d86224ea45ea4b261cacec, type: 2}
+  - {fileID: 11400000, guid: b13a3cbf58dccc649bfbf0c82c94ad15, type: 2}
+  - {fileID: 11400000, guid: d29838814f093b34bb6c32fb2d32d31c, type: 2}
   FragmentEnergyReward: 75

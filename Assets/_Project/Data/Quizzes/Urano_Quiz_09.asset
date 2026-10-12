@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de9655b8cb25c41a16da6d02127c8e, type: 3}
+  m_Name: Urano_Quiz_09
+  m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.QuizQuestionData
+  Question: O nome Urano vem de quem na mitologia grega?
+  Options:
+  - "Do deus grego do c\xE9u"
+  - Do deus dos mares
+  - Da deusa da guerra
+  CorrectIndex: 0
+  CorrectFeedback: "Certo! Ouranos era o deus do c\xE9u, e Urano \xE9 o \xFAnico
+    planeta batizado com nome grego, e n\xE3o romano."
+  IncorrectFeedback: "Pense em quem governava o que fica acima de n\xF3s."
