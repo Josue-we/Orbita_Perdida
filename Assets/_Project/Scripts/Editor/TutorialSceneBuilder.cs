@@ -796,13 +796,15 @@ namespace Lumen.EditorTools
             }
 
             directional.shadows = LightShadows.None;
+            directional.intensity = SunLight.Intensity;
+            directional.color = SunLight.LightColor;
 
             var sunLight = directional.GetComponent<SunLight>();
             if (sunLight == null) sunLight = directional.gameObject.AddComponent<SunLight>();
             if (sun != null) sunLight.SetSun(sun);
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.20f, 0.23f, 0.31f);
+            RenderSettings.ambientLight = SunLight.AmbientColor;
         }
 
         private static void EnsureAudioManager()

@@ -75,7 +75,7 @@ com folga, mas não para atravessar a rota inteira voando reto.
 ## A rota
 
 A rota é **zigue-zague** de propósito: a seta guia o LUMEN planeta a planeta, e
-não existe atalho em linha reta até a Terra. A nave é rápida (cerca de 36 u/s, 96 u/s
+não existe atalho em linha reta até a Terra. A nave é rápida (cerca de 45 u/s, 120 u/s
 com boost), então os planetas ficam bem afastados uns dos outros.
 
 | # | Planeta | O que o quiz pergunta |

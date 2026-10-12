@@ -3,14 +3,13 @@ using UnityEngine;
 
 namespace Lumen.Environment
 {
-    /// <summary>Atalho SO DO EDITOR para testar: F1 Saturno, F2 Jupiter, F3 Marte, F4 Terra. Nao entra no build.</summary>
+    /// <summary>Atalho SO DO EDITOR para testar: F1 Saturno, F2 Jupiter, F3 Marte, F4 Terra, F5 olhando para o Sol. Nao entra no build.</summary>
     public static class DebugTeleport
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
             var go = new GameObject("DebugTeleport");
-            go.hideFlags = HideFlags.DontSave;
             go.AddComponent<Runner>();
         }
 
@@ -23,9 +22,14 @@ namespace Lumen.Environment
                 if (Input.GetKeyDown(KeyCode.F2)) p = new Vector3(2500f, 80f, 12150f);
                 if (Input.GetKeyDown(KeyCode.F3)) p = new Vector3(100f, 40f, 15600f);
                 if (Input.GetKeyDown(KeyCode.F4)) p = new Vector3(1000f, 20f, 16600f);
+                bool sun = Input.GetKeyDown(KeyCode.F5);
+                if (sun) p = new Vector3(8500f, 400f, 8000f);
                 if (!p.HasValue) return;
                 var ship = FindFirstObjectByType<Lumen.Gameplay.LumenController>();
-                if (ship != null) ship.transform.position = p.Value;
+                if (ship != null) {
+                    ship.transform.position = p.Value;
+                    if (sun) ship.transform.rotation = Quaternion.LookRotation(Vector3.right);
+                }
             }
         }
     }

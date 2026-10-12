@@ -41,9 +41,13 @@ namespace Lumen.Gameplay
             }
         }
 
+        /// <summary>So o proximo planeta da rota pode abrir o encontro (sem pular etapas).</summary>
+        private bool IsNextInRoute => routeIndex < 0 || routeIndex == EventBus.RouteProgress;
+
         private void Update()
         {
             if (_triggered) return;
+            if (!IsNextInRoute) return;
 
             if (_player == null)
             {
@@ -82,6 +86,7 @@ namespace Lumen.Gameplay
         private void OnTriggerEnter(Collider other)
         {
             if (_triggered) return;
+            if (!IsNextInRoute) return;
             if (!IsPlayer(other)) return;
             StartEncounter(other.transform);
         }
@@ -89,6 +94,7 @@ namespace Lumen.Gameplay
         private void StartEncounter(Transform playerTransform)
         {
             if (_triggered) return;
+            if (!IsNextInRoute) return;
 
             if (phase == null)
             {
@@ -125,6 +131,8 @@ namespace Lumen.Gameplay
 
         private void CompletePhase(LumenEnergySystem energy)
         {
+            if (routeIndex >= 0) EventBus.AdvanceRoute(routeIndex);
+
             // Ultimo planeta da rota (nextPlanet nulo): missao concluida, sem fragmento.
             if (nextPlanet == null)
             {

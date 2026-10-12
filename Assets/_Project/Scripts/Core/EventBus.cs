@@ -35,10 +35,22 @@ namespace Lumen.Core
         /// <summary>Verdadeiro depois que o tutorial terminou (pela porta ou ao chegar no 1o planeta).</summary>
         public static bool TutorialCompleted { get; private set; }
 
+        /// <summary>
+        /// Proximo passo da rota que o jogador pode resolver (0 = Netuno ... ultimo = Terra).
+        /// Planetas fora de ordem ficam bloqueados: nao da para pular direto para a Terra.
+        /// </summary>
+        public static int RouteProgress { get; private set; }
+
+        public static void AdvanceRoute(int resolvedIndex)
+        {
+            if (resolvedIndex >= RouteProgress) RouteProgress = resolvedIndex + 1;
+        }
+
         /// <summary>Zera o estado da partida (usado ao reiniciar o jogo pela tela final).</summary>
         public static void ResetSession()
         {
             TutorialCompleted = false;
+            RouteProgress = 0;
         }
 
         public static void RaiseEnergyChanged(float current, float max)
