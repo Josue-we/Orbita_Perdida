@@ -242,6 +242,16 @@ namespace Lumen.Gameplay
             Gizmos.DrawWireSphere(boundsCenter, boundsRadius);
         }
 
+        /// <summary>Velocidade para frente atual (usada na desaceleracao da entrada em orbita).</summary>
+        public float ForwardSpeed => _forwardSpeed;
+
+        /// <summary>Zera a velocidade (a nave foi movida por fora, ex.: pela entrada em orbita).</summary>
+        public void StopMotion()
+        {
+            _forwardSpeed = 0f;
+            _verticalSpeed = 0f;
+        }
+
         /// <summary>Aumenta o raio de voo permitido - usado ao sair do tutorial.</summary>
         public void ExpandBounds(float newRadius)
         {

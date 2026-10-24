@@ -17,6 +17,13 @@ namespace Lumen.Cameras
 
         private Vector3 _velocity;
 
+        // Modo cinematografico (entrada em orbita): a camera deixa de seguir atras da
+        // nave e vai para a pose pedida; ao terminar volta suavemente.
+        private bool _cinematic;
+        private Vector3 _cinematicPosition;
+        private Vector3 _cinematicLook;
+        private float _slowReturnUntil;
+
         private void Awake()
         {
             // Tuning oficial sempre vence o valor salvo no Inspector (ver GameTuning).
@@ -35,13 +42,30 @@ namespace Lumen.Cameras
         {
             if (target == null) return;
 
+            if (_cinematic)
+            {
+                transform.position = Vector3.SmoothDamp(transform.position, _cinematicPosition,
+                    ref _velocity, GameTuning.CinematicSmooth);
+
+                Vector3 look = _cinematicLook - transform.position;
+                if (look.sqrMagnitude > 0.0001f)
+                {
+                    float tc = 1f - Mathf.Exp(-3f * Time.deltaTime);
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(look, Vector3.up), tc);
+                }
+                return;
+            }
+
+            bool returning = Time.time < _slowReturnUntil;
+
             Quaternion yaw = Quaternion.Euler(0f, target.eulerAngles.y, 0f);
             Vector3 desiredPosition = target.position + yaw * offset;
 
             transform.position = Vector3.SmoothDamp(transform.position, desiredPosition,
-                ref _velocity, positionSmoothTime);
+                ref _velocity, returning ? GameTuning.CinematicSmooth : positionSmoothTime);
 
-            float t = 1f - Mathf.Exp(-rotationSmooth * Time.deltaTime);
+            float t = 1f - Mathf.Exp(-(returning ? 3f : rotationSmooth) * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation,
                 DesiredRotation(yaw, desiredPosition), t);
         }
@@ -51,6 +75,22 @@ namespace Lumen.Cameras
             Vector3 lookPoint = target.position + yaw * lookAhead;
             Vector3 dir = lookPoint - fromPosition;
             return dir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(dir, Vector3.up) : transform.rotation;
+        }
+
+        /// <summary>Liga/atualiza a camera cinematografica (chame de novo para mover a pose).</summary>
+        public void SetCinematic(Vector3 position, Vector3 lookAt)
+        {
+            _cinematic = true;
+            _cinematicPosition = position;
+            _cinematicLook = lookAt;
+        }
+
+        /// <summary>Sai do modo cinematografico: a camera volta para tras da nave sem pulo.</summary>
+        public void EndCinematic()
+        {
+            if (!_cinematic) return;
+            _cinematic = false;
+            _slowReturnUntil = Time.time + GameTuning.CinematicReturnSeconds;
         }
 
         public void SetTarget(Transform newTarget)
@@ -68,6 +108,7 @@ namespace Lumen.Cameras
             transform.position = pos;
             transform.rotation = DesiredRotation(yaw, pos);
             _velocity = Vector3.zero;
+            _cinematic = false;
         }
     }
 }

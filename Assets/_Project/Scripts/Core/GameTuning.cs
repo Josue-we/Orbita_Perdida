@@ -51,6 +51,25 @@ namespace Lumen.Core
         public const float SignalBase = 5f;
         public const float SignalPerFragment = 18f;
 
+        // --- Entrada em orbita (camera cinematografica + nave desacelerando) ---
+        public const float OrbitGlideSeconds = 2.6f;      // tempo ate a nave parar
+        public const float OrbitCamSide = 10f;            // camera ao lado da nave
+        public const float OrbitCamUp = 4f;
+        public const float OrbitCamBack = 10f;
+        public const float OrbitLookAhead = 25f;          // olha para o planeta, a frente da nave
+        public const float CinematicSmooth = 0.6f;        // suavizacao da camera cinematografica
+        public const float CinematicReturnSeconds = 1.2f; // volta suave para a camera normal
+        public const float ShortLineSeconds = 2.4f;       // falas curtas da NOVA
+
+        // --- Fragmento de conhecimento (coleta) ---
+        public const float FragmentMaterializeSeconds = 0.45f;
+        public const float FragmentFlySeconds = 1.1f;
+        public const float FragmentResumeDelay = 0.9f;    // quanto tempo apos a coleta o jogador volta a voar
+
+        // --- HUD: preenchimento animado da barra de combustivel (pontos de % por segundo) ---
+        public const float EnergyRiseSpeed = 40f;
+        public const float EnergyFallSpeed = 300f;
+
         // --- Texto ---
         // Os Canvas escalam com a tela (referencia 1920x1080, ver UiTextTuning), entao estes
         // tamanhos valem em qualquer resolucao. Sao os tamanhos REAIS (sem encolher).

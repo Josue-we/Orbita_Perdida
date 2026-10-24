@@ -65,10 +65,30 @@ namespace Lumen.UI
 
         private Transform _gateTransform;
 
+        // Preenchimento animado do combustivel: sobe aos poucos ao coletar um fragmento.
+        private float _displayedEnergy = -1f;
+
+        private HudFragmentIcons _fragmentIcons;
+
         private void Awake()
         {
             ApplyTextTuning();
             BuildArrowGraphic();
+            BuildExtras();
+        }
+
+        /// <summary>Icones dos fragmentos e legenda de controles (feitos por codigo, valem em cena ja montada).</summary>
+        private void BuildExtras()
+        {
+            Transform canvas = fragmentsLabel != null ? fragmentsLabel.transform.parent : transform;
+
+            if (canvas.Find("FragmentIcons") == null)
+                _fragmentIcons = HudFragmentIcons.Create(canvas, TotalFragments);
+            else
+                _fragmentIcons = canvas.Find("FragmentIcons").GetComponent<HudFragmentIcons>();
+
+            if (canvas.Find("ControlsLegend") == null)
+                HudControlsLegend.Create(canvas);
         }
 
         /// <summary>
@@ -215,6 +235,7 @@ namespace Lumen.UI
         {
             // O sinal anima ate o valor-alvo (que so cresce com os fragmentos).
             UpdateSignalBar();
+            UpdateEnergyBar();
 
             // Combustivel zerado: o LUMEN esta parado esperando o resgate, e isso
             // tem prioridade sobre qualquer outro texto da tela.
@@ -296,12 +317,30 @@ namespace Lumen.UI
             _energy = current;
             _maxEnergy = max;
 
-            if (energyBar == null) return;
-            energyBar.maxValue = max;
-            energyBar.value = current;
-            SetFill(_energyFill, current, max);
+            // A primeira leitura (e qualquer mudanca de tanque) aparece na hora; as demais animam.
+            if (_displayedEnergy < 0f) _displayedEnergy = current;
+            UpdateEnergyBar();
+        }
+
+        /// <summary>
+        /// A barra de combustivel acompanha o valor real: desce rapido (acompanha o consumo) e
+        /// SOBE devagar ao receber energia - o fragmento "enche" o tanque a olhos vistos.
+        /// </summary>
+        private void UpdateEnergyBar()
+        {
+            if (energyBar == null || _maxEnergy <= 0f) return;
+            if (_displayedEnergy < 0f) _displayedEnergy = _energy;
+
+            float speed = _energy >= _displayedEnergy ? GameTuning.EnergyRiseSpeed : GameTuning.EnergyFallSpeed;
+            // Velocidade em pontos de % do tanque por segundo.
+            float step = speed * (_maxEnergy / 100f) * Time.unscaledDeltaTime;
+            _displayedEnergy = Mathf.MoveTowards(_displayedEnergy, _energy, step);
+
+            energyBar.maxValue = _maxEnergy;
+            energyBar.value = _displayedEnergy;
+            SetFill(_energyFill, _displayedEnergy, _maxEnergy);
             if (energyPercentText != null)
-                energyPercentText.text = $"{Mathf.RoundToInt(current)}%";
+                energyPercentText.text = $"{Mathf.RoundToInt(_displayedEnergy / _maxEnergy * 100f)}%";
         }
 
         private void HandleRescued(string place)
@@ -315,6 +354,7 @@ namespace Lumen.UI
         {
             _fragmentsCollected++;
             UpdateFragmentsLabel();
+            if (_fragmentIcons != null) _fragmentIcons.Collect();
 
             // Seta foi usada: esconde e prepara o proximo rumo (fases futuras).
             _navigationActive = false;

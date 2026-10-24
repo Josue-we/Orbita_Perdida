@@ -90,6 +90,13 @@ com boost), então os planetas ficam bem afastados uns dos outros.
 Além dos mundos da rota, o céu tem o **Sol** (que é a fonte de luz da cena),
 Mercúrio, Vênus, a Lua e Plutão — sem quiz, só para dar mais realismo ao Sistema Solar.
 
+Ao entrar na órbita de um planeta, a câmera passa para um ângulo lateral, a nave
+desacelera até parar e a NOVA avisa "Estamos entrando na órbita de…". Ao acertar, um
+fragmento de conhecimento brilhante surge, é atraído até o LUMEN e explode em
+partículas douradas; o cristal correspondente acende no HUD, a barra de combustível
+enche e a NOVA comemora com uma fala curta. A legenda de teclas fica no canto
+esquerdo da tela durante o voo.
+
 A cada aproximação, a NOVA narra o que você está vendo e o desafio aparece. Errar
 não penaliza: você tenta de novo até acertar. Acertando, o fragmento é
 coletado, o tanque se reenche e a seta aponta o próximo mundo. A missão acaba no

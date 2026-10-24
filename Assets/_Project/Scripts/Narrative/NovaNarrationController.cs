@@ -68,12 +68,14 @@ namespace Lumen.Narrative
             return h;
         }
 
-        public void Play(string[] lines, Action onFinished)
+        /// <param name="skippable">Falas importantes (curiosidades) podem ser puladas com uma tecla;
+        /// comentarios soltos (comemoracao) nao, para nao sumirem enquanto o jogador voa.</param>
+        public void Play(string[] lines, Action onFinished, bool skippable = true)
         {
-            StartCoroutine(RunSequence(lines, onFinished));
+            StartCoroutine(RunSequence(lines, onFinished, skippable));
         }
 
-        private IEnumerator RunSequence(string[] lines, Action onFinished)
+        private IEnumerator RunSequence(string[] lines, Action onFinished, bool skippable)
         {
             // Altura da caixa = a da MAIOR fala (nao pula de tamanho de uma fala para outra).
             float tallest = 0f;
@@ -86,10 +88,13 @@ namespace Lumen.Narrative
             {
                 if (captionText != null) captionText.text = line;
 
+                // Falas curtas ("Estamos entrando na orbita...") nao precisam de 3,5 s.
+                float duration = line.Length <= 48 ? GameTuning.ShortLineSeconds : secondsPerLine;
+
                 float elapsed = 0f;
-                while (elapsed < secondsPerLine)
+                while (elapsed < duration)
                 {
-                    if (Input.anyKeyDown) break; // avanca a linha na hora
+                    if (skippable && Input.anyKeyDown) break; // avanca a linha na hora
                     elapsed += Time.deltaTime;
                     yield return null;
                 }

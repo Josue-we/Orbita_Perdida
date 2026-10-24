@@ -1018,7 +1018,7 @@ namespace Lumen.EditorTools
             var phaseNetuno = EnsurePlanetPhaseData("Netuno_Phase.asset", "Netuno", quizNetuno,
                 new[]
                 {
-                    "Aproximando de Netuno.",
+                    "Estamos entrando na órbita de Netuno.",
                     "Netuno é o planeta mais distante do Sol, com temperaturas perto de -220 graus Celsius.",
                     "Mas não deixe o frio enganar: os ventos aqui são os mais violentos de todo o Sistema Solar.",
                 }, 75f);
@@ -1026,7 +1026,7 @@ namespace Lumen.EditorTools
             var phaseUrano = EnsurePlanetPhaseData("Urano_Phase.asset", "Urano", quizUrano,
                 new[]
                 {
-                    "Aproximando de Urano.",
+                    "Estamos entrando na órbita de Urano.",
                     "Urano gira de lado, como se rolasse por sua órbita.",
                     "Com isso, os polos passam décadas expostos ao Sol e depois à escuridão.",
                 }, 75f);
@@ -1034,7 +1034,7 @@ namespace Lumen.EditorTools
             var phaseSaturno = EnsurePlanetPhaseData("Saturno_Phase.asset", "Saturno", quizSaturno,
                 new[]
                 {
-                    "Aproximando de Saturno.",
+                    "Estamos entrando na órbita de Saturno.",
                     "O gigante dos anéis: bilhões de fragmentos de gelo e rocha.",
                     "Você está passando pelo planeta mais fotogênico do Sistema Solar.",
                 }, 75f);
@@ -1042,7 +1042,7 @@ namespace Lumen.EditorTools
             var phaseJupiter = EnsurePlanetPhaseData("Jupiter_Phase.asset", "Júpiter", quizJupiter,
                 new[]
                 {
-                    "Aproximando de Júpiter.",
+                    "Estamos entrando na órbita de Júpiter.",
                     "O maior planeta de todos — sua Grande Mancha Vermelha é uma tempestade maior que a Terra.",
                     "Não há superfície sólida: é um gigante gasoso.",
                 }, 75f);
@@ -1050,7 +1050,7 @@ namespace Lumen.EditorTools
             var phaseMarte = EnsurePlanetPhaseData("Marte_Phase.asset", "Marte", quizMarte,
                 new[]
                 {
-                    "Aproximando de Marte.",
+                    "Estamos entrando na órbita de Marte.",
                     "O planeta vermelho, coberto por óxido de ferro.",
                     "Foi aqui que rovers já exploraram a superfície.",
                 }, 75f);
@@ -1059,7 +1059,7 @@ namespace Lumen.EditorTools
             var phaseTerra = EnsurePlanetPhaseData("Terra_Phase.asset", "Terra", quizTerra,
                 new[]
                 {
-                    "Aproximando da Terra.",
+                    "Estamos entrando na órbita da Terra.",
                     "Depois de coletar conhecimento planeta a planeta, o retorno está quase completo.",
                     "LUMEN, prepare-se para concluir o último quiz e voltar para casa.",
                 }, 0f);

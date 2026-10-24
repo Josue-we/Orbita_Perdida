@@ -1,5 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using Lumen.Core;
+using Lumen.Cameras;
+using Lumen.Gameplay.Effects;
 using Lumen.Data;
 using Lumen.Narrative;
 using Lumen.Gameplay.Challenges;
@@ -30,6 +33,20 @@ namespace Lumen.Gameplay
         private bool _triggered;
         private Transform _player;
         private float _checkTimer;
+
+        // Direcao (no plano horizontal) da nave para o planeta, usada pela camera de orbita
+        // e para posicionar o fragmento de conhecimento.
+        private Vector3 _towardPlanet = Vector3.forward;
+        private CameraFollow _cameraFollow;
+
+        private static readonly string[] CelebrationLines =
+        {
+            "Muito bem! Fragmento de conhecimento recebido.",
+            "Isso! Energia restaurada, LUMEN.",
+            "Excelente! O sinal com a Terra está mais forte.",
+            "Ótima resposta! Seguimos viagem.",
+            "Perfeito! Mais um fragmento a bordo.",
+        };
 
         private float WorldTriggerRadius
         {
@@ -110,9 +127,15 @@ namespace Lumen.Gameplay
             // nunca fica preso num tutorial infinito.
             EventBus.RaiseTutorialCompleted();
 
-            if (playerTransform == null) _player = FindPlayer();
+            // Sempre a raiz do LUMEN (o colisor que entrou pode ser um filho).
+            _player = FindPlayer();
             var energy = _player != null ? _player.GetComponent<LumenEnergySystem>() : null;
             var narrator = Object.FindFirstObjectByType<NovaNarrationController>();
+
+            // Entrada na orbita: a camera vai para um angulo cinematografico e a nave desacelera
+            // enquanto a NOVA diz a fala curta ("Estamos entrando na orbita de ...").
+            _cameraFollow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
+            if (_player != null) StartCoroutine(OrbitEntrance());
 
             if (narrator != null && phase.NarrationLines != null && phase.NarrationLines.Length > 0)
                 narrator.Play(phase.NarrationLines, () => StartChallenge(energy));
@@ -138,17 +161,79 @@ namespace Lumen.Gameplay
             {
                 EventBus.RaiseMissionComplete();
                 GameManager.Instance.SetState(GameState.Playing);
+                if (_cameraFollow != null) _cameraFollow.EndCinematic();
                 return;
             }
 
-            EventBus.RaiseFragmentCollected(phase.PlanetName);
-            if (energy != null) energy.Refill(phase.FragmentEnergyReward);
+            StartCoroutine(CollectSequence(energy));
+        }
 
-            // O planeta recem-resolvido vira o novo ponto de resgate: se o
-            // combustivel zerar no proximo trecho, o LUMEN volta para aqui.
-            GameManager.Instance.SetRescuePoint(GetRescuePosition(), phase.PlanetName);
+        /// <summary>
+        /// Camera cinematografica ao lado da nave, olhando para o planeta, enquanto a nave
+        /// desliza e para (velocidade cai suavemente a zero).
+        /// </summary>
+        private IEnumerator OrbitEntrance()
+        {
+            Transform ship = _player;
+            var lumen = ship.GetComponent<LumenController>();
+
+            Vector3 toPlanet = transform.position - ship.position;
+            toPlanet.y = 0f;
+            _towardPlanet = toPlanet.sqrMagnitude > 0.01f ? toPlanet.normalized : ship.forward;
+
+            float speed0 = lumen != null ? Mathf.Max(0f, lumen.ForwardSpeed) : 0f;
+            float total = GameTuning.OrbitGlideSeconds;
+            float t = 0f;
+
+            while (t < total && ship != null)
+            {
+                t += Time.deltaTime;
+                float k = Mathf.Clamp01(1f - t / total);
+                ship.position += ship.forward * (speed0 * k * k * Time.deltaTime);
+                UpdateOrbitCamera(ship);
+                yield return null;
+            }
+
+            if (lumen != null) lumen.StopMotion();
+            if (ship != null) UpdateOrbitCamera(ship);
+        }
+
+        private void UpdateOrbitCamera(Transform ship)
+        {
+            if (_cameraFollow == null) return;
+
+            Vector3 right = Vector3.Cross(Vector3.up, _towardPlanet);
+            Vector3 position = ship.position + right * GameTuning.OrbitCamSide
+                               + Vector3.up * GameTuning.OrbitCamUp
+                               - _towardPlanet * GameTuning.OrbitCamBack;
+            Vector3 lookAt = ship.position + _towardPlanet * GameTuning.OrbitLookAhead + Vector3.up * 3f;
+            _cameraFollow.SetCinematic(position, lookAt);
+        }
+
+        /// <summary>
+        /// Acertou: o fragmento brilhante surge perto do LUMEN, e atraido ate ele, explode em
+        /// particulas douradas e so entao conta como coletado (som, HUD, energia). A NOVA comemora
+        /// com uma fala curta e o jogador volta a voar.
+        /// </summary>
+        private IEnumerator CollectSequence(LumenEnergySystem energy)
+        {
+            Transform ship = _player != null ? _player : FindPlayer();
+            Vector3 right = Vector3.Cross(Vector3.up, _towardPlanet);
+
+            if (ship != null)
+            {
+                Vector3 start = ship.position + _towardPlanet * 40f + Vector3.up * 7f + right * 8f;
+                yield return FragmentCollectEffect.FlyTo(ship, start, () => OnFragmentArrived(energy));
+            }
+            else
+            {
+                OnFragmentArrived(energy);
+            }
+
+            yield return new WaitForSeconds(GameTuning.FragmentResumeDelay);
 
             GameManager.Instance.SetState(GameState.Playing);
+            if (_cameraFollow != null) _cameraFollow.EndCinematic();
 
             // Seta de navegacao aponta para o proximo planeta da rota.
             var nextTrigger = nextPlanet != null
@@ -156,6 +241,24 @@ namespace Lumen.Gameplay
                 : null;
             if (nextTrigger != null)
                 EventBus.RaiseNavigateTo(nextPlanet, nextTrigger.PhaseName);
+        }
+
+        private void OnFragmentArrived(LumenEnergySystem energy)
+        {
+            EventBus.RaiseFragmentCollected(phase.PlanetName);
+            if (energy != null) energy.Refill(phase.FragmentEnergyReward);
+
+            // O planeta recem-resolvido vira o novo ponto de resgate: se o
+            // combustivel zerar no proximo trecho, o LUMEN volta para aqui.
+            GameManager.Instance.SetRescuePoint(GetRescuePosition(), phase.PlanetName);
+
+            // NOVA comemora com uma fala curta (nao some se o jogador apertar uma tecla).
+            var narrator = Object.FindFirstObjectByType<NovaNarrationController>();
+            if (narrator != null)
+            {
+                int i = Mathf.Abs(routeIndex) % CelebrationLines.Length;
+                narrator.Play(new[] { CelebrationLines[i] }, null, false);
+            }
         }
 
         /// <summary>

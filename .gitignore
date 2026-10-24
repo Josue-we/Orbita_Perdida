@@ -115,3 +115,8 @@ InitTestScene*.unity*
 /[Aa]ssets/Planets of the Solar System 3D.meta
 /[Aa]ssets/LowpolySpaceshipPack/
 /[Aa]ssets/LowpolySpaceshipPack.meta
+
+# Arquivos locais do Claude (nao vao para o repositorio)
+/CLAUDE.md
+/claude-skills/
+/.claude/
