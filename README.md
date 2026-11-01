@@ -82,7 +82,7 @@ com boost), então os planetas ficam bem afastados uns dos outros.
 | --- | --- | --- |
 | 1 | Netuno | Os ventos mais fortes do Sistema Solar, a 2.100 km/h |
 | 2 | Urano | Por que ele gira "deitado" e tem estações de 21 anos |
-| 3 | Saturno | O que forma os anéis de gelo e rocha |
+| 3 | Saturno | **Minigame:** atravessar 5 anéis luminosos pelo centro (sem quiz) |
 | 4 | Júpiter | A Grande Mancha Vermelha, uma tempestade maior que a Terra |
 | 5 | Marte | Por que a superfície é vermelha (óxido de ferro) |
 | 6 | Terra | O que torna a Terra o único mundo com água líquida e vida |
@@ -95,13 +95,17 @@ desacelera até parar e a NOVA avisa "Estamos entrando na órbita de…". Ao ace
 fragmento de conhecimento brilhante surge, é atraído até o LUMEN e explode em
 partículas douradas; o cristal correspondente acende no HUD, a barra de combustível
 enche e a NOVA comemora com uma fala curta. A legenda de teclas fica no canto
-esquerdo da tela durante o voo.
+inferior direito da tela durante o voo.
 
 A cada aproximação, a NOVA narra o que você está vendo e o desafio aparece. Errar
 não penaliza: você tenta de novo até acertar. Acertando, o fragmento é
 coletado, o tanque se reenche e a seta aponta o próximo mundo. A missão acaba no
 quiz da Terra, que abre a **tela de final de jogo**: resumo do sinal e dos fragmentos,
 as curiosidades coletadas e os botões **Jogar novamente** e **Sair**.
+
+Em **Saturno** não há quiz: o jogador pilota o LUMEN por um corredor de 5 anéis luminosos e precisa passar
+pelo centro de cada um. Encostar no anel só devolve a nave um pouco antes dele (sem punição); passando
+pelo último, o fragmento é coletado como nos outros planetas.
 
 ## Rodando o jogo
 
@@ -140,7 +144,7 @@ Inspector e editar, sem mexer em código.
 
 ## O que ainda não existe
 
-- [ ] Minigames próprios de Saturno e Júpiter (hoje usam o mesmo quiz)
+- [ ] Minigames próprios de Urano, Júpiter e Marte (hoje usam o quiz; Saturno já tem o dos anéis)
 - [ ] Modelo 3D do LUMEN (hoje é uma cápsula simples)
 - [ ] Tela de final de jogo definitiva (hoje é um protótipo)
 

@@ -245,6 +245,13 @@ namespace Lumen.Gameplay
         /// <summary>Velocidade para frente atual (usada na desaceleracao da entrada em orbita).</summary>
         public float ForwardSpeed => _forwardSpeed;
 
+        /// <summary>Gira a nave para o rumo (em graus) - usado ao reposicionar a nave num minigame.</summary>
+        public void SetHeading(float yawDegrees)
+        {
+            _yaw = yawDegrees;
+            transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
+        }
+
         /// <summary>Zera a velocidade (a nave foi movida por fora, ex.: pela entrada em orbita).</summary>
         public void StopMotion()
         {

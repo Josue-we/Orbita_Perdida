@@ -95,6 +95,7 @@ namespace Lumen.EditorTools
             EnsureIntroSequence();
             EnsureNovaNarrationUI();
             EnsureQuizUI();
+            EnsureSaturnRingsMinigame();
             EnsureSkybox();
             EnsureBackgroundDecor();
             EnsureAudioManager();
@@ -615,6 +616,13 @@ namespace Lumen.EditorTools
             quiz.Configure(panel, questionText, feedbackText, buttons, labels);
         }
 
+        /// <summary>Minigame de Saturno: um objeto so com o componente (a UI e os aneis nascem em runtime).</summary>
+        private static void EnsureSaturnRingsMinigame()
+        {
+            if (Object.FindFirstObjectByType<SaturnRingsChallenge>() != null) return;
+            new GameObject("Saturn_Rings_Minigame").AddComponent<SaturnRingsChallenge>();
+        }
+
         /// <summary>Tela inicial: titulo "Órbita Perdida" + botao "Jogar".</summary>
         private static void EnsureMainMenu()
         {
@@ -1069,6 +1077,13 @@ namespace Lumen.EditorTools
             AssignQuizPool(phaseNetuno, quizNetuno, "Netuno", QuizBank.Netuno);
             AssignQuizPool(phaseUrano, quizUrano, "Urano", QuizBank.Urano);
             AssignQuizPool(phaseSaturno, quizSaturno, "Saturno", QuizBank.Saturno);
+
+            // Saturno usa o minigame dos aneis (o quiz fica como reserva se o minigame faltar na cena).
+            if (phaseSaturno != null && phaseSaturno.Challenge != ChallengeKind.SaturnRings)
+            {
+                phaseSaturno.Challenge = ChallengeKind.SaturnRings;
+                EditorUtility.SetDirty(phaseSaturno);
+            }
             AssignQuizPool(phaseJupiter, quizJupiter, "Jupiter", QuizBank.Jupiter);
             AssignQuizPool(phaseMarte, quizMarte, "Marte", QuizBank.Marte);
             AssignQuizPool(phaseTerra, quizTerra, "Terra", QuizBank.Terra);

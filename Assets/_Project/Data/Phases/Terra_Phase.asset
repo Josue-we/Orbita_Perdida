@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Terra_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: Terra
+  Challenge: 0
   NarrationLines:
   - Aproximando da Terra.
   - "Depois de coletar conhecimento planeta a planeta, o retorno est\xE1 quase completo."

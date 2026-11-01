@@ -13,12 +13,18 @@ namespace Lumen.Data
     /// entre partidas (PlayerPrefs), entao jogar de novo nao traz a mesma pergunta.
     /// Se o pool estiver vazio, usa o campo Quiz (comportamento antigo).
     /// </summary>
+    /// <summary>Tipo de desafio da fase. Quiz e o padrao (assets antigos continuam funcionando).</summary>
+    public enum ChallengeKind { Quiz = 0, SaturnRings = 1 }
+
     [CreateAssetMenu(fileName = "NewPhaseData", menuName = "LUMEN/Phase Data")]
     public class PhaseData : ScriptableObject
     {
         private const string SeenKeyPrefix = "lumen.quizseen.";
 
         public string PlanetName;
+
+        [Tooltip("Qual desafio roda depois da narracao. Se o minigame nao existir na cena, cai no quiz.")]
+        public ChallengeKind Challenge = ChallengeKind.Quiz;
 
         [TextArea(2, 4)]
         public string[] NarrationLines;

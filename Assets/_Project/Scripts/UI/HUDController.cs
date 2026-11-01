@@ -453,7 +453,10 @@ namespace Lumen.UI
         {
             if (navArrow == null) return;
 
-            bool playable = GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Playing;
+            bool playable = GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Playing
+                            && !EventBus.MinigameActive;
+            if (EventBus.MinigameActive)
+                SetObjective("Atravesse o centro de cada anel. Se encostar, é só tentar de novo.");
             bool show = _navigationActive && playable && _navigationTarget != null;
 
             if (!show)

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Netuno_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: Netuno
+  Challenge: 0
   NarrationLines:
   - Aproximando de Netuno.
   - "Netuno \xE9 o planeta mais distante do Sol, com temperaturas perto de -220 graus

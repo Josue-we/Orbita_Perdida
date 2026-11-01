@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Marte_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: Marte
+  Challenge: 0
   NarrationLines:
   - Aproximando de Marte.
   - "O planeta vermelho, coberto por \xF3xido de ferro."

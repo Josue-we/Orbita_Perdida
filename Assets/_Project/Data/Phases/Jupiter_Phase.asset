@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Jupiter_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: "J\xFApiter"
+  Challenge: 0
   NarrationLines:
   - "Aproximando de J\xFApiter."
   - "O maior planeta de todos \u2014 sua Grande Mancha Vermelha \xE9 uma tempestade

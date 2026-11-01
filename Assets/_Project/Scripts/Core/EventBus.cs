@@ -41,6 +41,11 @@ namespace Lumen.Core
         /// </summary>
         public static int RouteProgress { get; private set; }
 
+        /// <summary>Verdadeiro enquanto um minigame pilotado esta rodando (o HUD nao mostra a seta de rota).</summary>
+        public static bool MinigameActive { get; private set; }
+
+        public static void SetMinigameActive(bool active) => MinigameActive = active;
+
         public static void AdvanceRoute(int resolvedIndex)
         {
             if (resolvedIndex >= RouteProgress) RouteProgress = resolvedIndex + 1;
@@ -51,6 +56,7 @@ namespace Lumen.Core
         {
             TutorialCompleted = false;
             RouteProgress = 0;
+            MinigameActive = false;
         }
 
         public static void RaiseEnergyChanged(float current, float max)

@@ -66,6 +66,16 @@ namespace Lumen.Core
         public const float FragmentFlySeconds = 1.1f;
         public const float FragmentResumeDelay = 0.9f;    // quanto tempo apos a coleta o jogador volta a voar
 
+        // --- Minigame de Saturno (corredor de aneis) ---
+        public const int SaturnGateCount = 5;
+        public const float SaturnGateRadius = 16f;        // raio visual do anel (o "buraco")
+        public const float SaturnGateMargin = 2.5f;       // folga: passar a menos de (raio - folga) do centro conta
+        public const float SaturnFirstGateDistance = 110f;
+        public const float SaturnGateSpacing = 130f;
+        public const float SaturnRespawnBehind = 60f;     // apos errar, a nave volta tantos metros antes do anel
+        public const float SaturnLeashDistance = 450f;    // longe demais do corredor: volta para o anel atual
+        public const float SaturnMinFuel = 15f;           // durante o minigame o tanque nao zera (resgate teletransportaria a nave)
+
         // --- HUD: preenchimento animado da barra de combustivel (pontos de % por segundo) ---
         public const float EnergyRiseSpeed = 40f;
         public const float EnergyFallSpeed = 300f;

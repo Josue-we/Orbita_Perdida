@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Saturno_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: Saturno
+  Challenge: 1
   NarrationLines:
   - Aproximando de Saturno.
   - "O gigante dos an\xE9is: bilh\xF5es de fragmentos de gelo e rocha."

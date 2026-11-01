@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Urano_Phase
   m_EditorClassIdentifier: Assembly-CSharp::Lumen.Data.PhaseData
   PlanetName: Urano
+  Challenge: 0
   NarrationLines:
   - Aproximando de Urano.
   - "Urano gira de lado, como se rolasse por sua \xF3rbita."

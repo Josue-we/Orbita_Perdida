@@ -4,14 +4,14 @@ using UnityEngine.UI;
 namespace Lumen.UI
 {
     /// <summary>
-    /// Legenda de controles no canto esquerdo da tela, com teclas desenhadas como "teclas de
+    /// Legenda de controles no canto inferior direito da tela, com teclas desenhadas como "teclas de
     /// teclado". Fica visivel o jogo todo (antes os controles so apareciam no tutorial).
     /// </summary>
     public class HudControlsLegend : MonoBehaviour
     {
-        private const int KeyFontSize = 24;
-        private const int LabelFontSize = 26;
-        private const float KeyHeight = 40f;
+        private const int KeyFontSize = 22;
+        private const int LabelFontSize = 24;
+        private const float KeyHeight = 34f;
 
         private CanvasGroup _group;
 
@@ -31,14 +31,15 @@ namespace Lumen.UI
             go.transform.SetParent(canvas, false);
 
             var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.02f, 0.50f);
-            rt.anchorMax = new Vector2(0.30f, 0.735f);
+            // Canto inferior direito, abaixo da caixa da NOVA (que comeca em 19% da altura).
+            rt.anchorMin = new Vector2(0.755f, 0.012f);
+            rt.anchorMax = new Vector2(0.98f, 0.188f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
             var column = go.AddComponent<VerticalLayoutGroup>();
             column.childAlignment = TextAnchor.UpperLeft;
-            column.spacing = 8f;
+            column.spacing = 5f;
             column.childControlWidth = false;
             column.childControlHeight = false;
             column.childForceExpandWidth = false;
@@ -63,7 +64,7 @@ namespace Lumen.UI
         {
             var row = new GameObject("Row", typeof(RectTransform));
             row.transform.SetParent(parent, false);
-            ((RectTransform)row.transform).sizeDelta = new Vector2(560f, KeyHeight);
+            ((RectTransform)row.transform).sizeDelta = new Vector2(430f, KeyHeight);
 
             var layout = row.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleLeft;
@@ -77,7 +78,7 @@ namespace Lumen.UI
             {
                 var cap = new GameObject("Key_" + key, typeof(RectTransform));
                 cap.transform.SetParent(row.transform, false);
-                float width = key.Length <= 1 ? KeyHeight : 22f + key.Length * 15f;
+                float width = key.Length <= 1 ? KeyHeight : 20f + key.Length * 14f;
                 ((RectTransform)cap.transform).sizeDelta = new Vector2(width, KeyHeight);
 
                 var img = cap.AddComponent<Image>();
@@ -93,7 +94,7 @@ namespace Lumen.UI
 
             var text = NewText(row.transform, font, label, LabelFontSize, TextAnchor.MiddleLeft,
                 new Color(0.86f, 0.93f, 1f, 0.88f));
-            text.rectTransform.sizeDelta = new Vector2(380f, KeyHeight);
+            text.rectTransform.sizeDelta = new Vector2(230f, KeyHeight);
         }
 
         private static Text NewText(Transform parent, Font font, string value, int size, TextAnchor anchor, Color color)

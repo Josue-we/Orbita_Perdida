@@ -31,6 +31,7 @@ namespace Lumen.Gameplay
         public int RouteIndex => routeIndex;
 
         private bool _triggered;
+        private Coroutine _orbitRoutine;
         private Transform _player;
         private float _checkTimer;
 
@@ -135,7 +136,7 @@ namespace Lumen.Gameplay
             // Entrada na orbita: a camera vai para um angulo cinematografico e a nave desacelera
             // enquanto a NOVA diz a fala curta ("Estamos entrando na orbita de ...").
             _cameraFollow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
-            if (_player != null) StartCoroutine(OrbitEntrance());
+            if (_player != null) _orbitRoutine = StartCoroutine(OrbitEntrance());
 
             if (narrator != null && phase.NarrationLines != null && phase.NarrationLines.Length > 0)
                 narrator.Play(phase.NarrationLines, () => StartChallenge(energy));
@@ -145,6 +146,38 @@ namespace Lumen.Gameplay
 
         private void StartChallenge(LumenEnergySystem energy)
         {
+            // Minigame pilotado (Saturno): o jogador voa de verdade, entao a camera volta para
+            // tras da nave e a entrada em orbita (que ainda pode estar deslizando) para na hora.
+            if (phase.Challenge == ChallengeKind.SaturnRings)
+            {
+                var rings = Object.FindFirstObjectByType<SaturnRingsChallenge>();
+                if (rings != null)
+                {
+                    if (_orbitRoutine != null) StopCoroutine(_orbitRoutine);
+                    if (_player != null)
+                    {
+                        var lumen = _player.GetComponent<LumenController>();
+                        if (lumen != null) lumen.StopMotion();
+                    }
+                    if (_cameraFollow != null) _cameraFollow.EndCinematic();
+
+                    rings.SetPlanet(transform);
+                    rings.StartChallenge(phase, () =>
+                    {
+                        // O fragmento surge a frente da nave, onde a camera esta olhando.
+                        if (_player != null)
+                        {
+                            Vector3 fwd = _player.forward;
+                            fwd.y = 0f;
+                            if (fwd.sqrMagnitude > 0.01f) _towardPlanet = fwd.normalized;
+                        }
+                        CompletePhase(energy);
+                    });
+                    return;
+                }
+                Debug.LogWarning("[LUMEN] SaturnRingsChallenge não está na cena (rode LUMEN > Montar Cena de Tutorial). Usando o quiz.");
+            }
+
             var quiz = Object.FindFirstObjectByType<QuizChallengeController>();
             if (quiz != null)
                 quiz.StartChallenge(phase, () => CompletePhase(energy));
