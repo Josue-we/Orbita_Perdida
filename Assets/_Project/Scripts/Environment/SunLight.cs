@@ -15,9 +15,11 @@ namespace Lumen.Environment
     {
         // Valores oficiais (o construtor de cena tambem usa): luz forte e ambiente fraco
         // deixam a iluminacao bem direcional - um lado claro e o outro escuro.
-        public const float Intensity = 1.5f;
-        public static readonly Color LightColor = new Color(1f, 0.95f, 0.85f);
-        public static readonly Color AmbientColor = new Color(0.13f, 0.15f, 0.22f);
+        // Mais forte e mais quente que antes, com ambiente frio e escuro: a face voltada para o
+        // Sol fica dourada e a face oposta quase escura e azulada, entao da para ver de onde vem a luz.
+        public const float Intensity = 2.3f;
+        public static readonly Color LightColor = new Color(1f, 0.91f, 0.74f);
+        public static readonly Color AmbientColor = new Color(0.05f, 0.06f, 0.11f);
 
         [SerializeField] private Transform sun;
 

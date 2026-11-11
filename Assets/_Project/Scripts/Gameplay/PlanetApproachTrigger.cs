@@ -6,6 +6,7 @@ using Lumen.Gameplay.Effects;
 using Lumen.Data;
 using Lumen.Narrative;
 using Lumen.Gameplay.Challenges;
+using Lumen.Environment;
 
 namespace Lumen.Gameplay
 {
@@ -61,6 +62,12 @@ namespace Lumen.Gameplay
 
         /// <summary>So o proximo planeta da rota pode abrir o encontro (sem pular etapas).</summary>
         private bool IsNextInRoute => routeIndex < 0 || routeIndex == EventBus.RouteProgress;
+
+        private void Awake()
+        {
+            // Planeta solido (a nave nao entra): garante o corpo mesmo em cena montada antes disto.
+            if (GetComponent<PlanetBody>() == null) gameObject.AddComponent<PlanetBody>();
+        }
 
         private void Update()
         {

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Lumen.Core;
 using Lumen.Cameras;
+using Lumen.Environment;
 
 namespace Lumen.Gameplay
 {
@@ -173,7 +174,22 @@ namespace Lumen.Gameplay
             }
 
             Vector3 velocity = transform.forward * _forwardSpeed + Vector3.up * _verticalSpeed;
-            transform.position = ClampToBounds(transform.position + velocity * dt);
+            Vector3 next = ClampToBounds(transform.position + velocity * dt);
+
+            // Planetas sao solidos: a nave e empurrada para fora e perde so a velocidade que
+            // apontava para dentro (desliza pela superficie em vez de "grudar").
+            next = PlanetBody.PushOut(next, out bool hitPlanet, out Vector3 planetNormal);
+            if (hitPlanet)
+            {
+                float into = Vector3.Dot(velocity, planetNormal);
+                if (into < 0f)
+                {
+                    Vector3 slide = velocity - planetNormal * into;
+                    _forwardSpeed = Vector3.Dot(slide, transform.forward);
+                    _verticalSpeed = Vector3.Dot(slide, Vector3.up);
+                }
+            }
+            transform.position = next;
 
             // Frear e girar nao queimam combustivel.
             _energy.Tick(dt, engineOn);

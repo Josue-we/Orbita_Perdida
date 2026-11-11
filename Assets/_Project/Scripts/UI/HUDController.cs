@@ -471,7 +471,7 @@ namespace Lumen.UI
 
             Vector3 toTarget = _navigationTarget.position - _cam.transform.position;
 
-            SetObjective($"Siga até {_targetName} ({toTarget.magnitude:F0} m)");
+            SetObjective($"Siga até {_targetName} ({DistanceFormat.Km(toTarget.magnitude)})");
 
             if (Vector3.Dot(toTarget, _cam.transform.forward) < 0f)
             {

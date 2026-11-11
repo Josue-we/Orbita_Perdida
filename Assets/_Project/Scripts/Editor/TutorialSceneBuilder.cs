@@ -777,6 +777,10 @@ namespace Lumen.EditorTools
             instanceObj.transform.position = position;
             instanceObj.transform.localScale = Vector3.one * scale;
             DisableHeavyEffects(instanceObj);
+
+            // Sol e planetas decorativos tambem sao solidos (a nave nao atravessa). A nebulosa nao.
+            if (!prefabFileName.StartsWith("Nebula") && instanceObj.GetComponent<PlanetBody>() == null)
+                instanceObj.AddComponent<PlanetBody>();
         }
 
         /// <summary>Desliga os "Glow" (billboards enormes com transparencia): caros em GPU integrada.</summary>
