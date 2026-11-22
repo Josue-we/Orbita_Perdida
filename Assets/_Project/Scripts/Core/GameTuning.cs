@@ -60,6 +60,8 @@ namespace Lumen.Core
         public const float CinematicSmooth = 0.6f;        // suavizacao da camera cinematografica
         public const float CinematicReturnSeconds = 1.2f; // volta suave para a camera normal
         public const float ShortLineSeconds = 2.4f;       // falas curtas da NOVA
+        public const float NovaVoiceVolume = 1f;          // volume da voz da NOVA (0 a 1)
+        public const float NovaVoiceGapSeconds = 0.4f;    // pausa depois de cada fala com voz
 
         // --- Fragmento de conhecimento (coleta) ---
         public const float FragmentMaterializeSeconds = 0.45f;

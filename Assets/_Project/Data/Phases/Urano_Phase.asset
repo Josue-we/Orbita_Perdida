@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Urano
   Challenge: 0
   NarrationLines:
-  - Aproximando de Urano.
+  - "Estamos entrando na \xF3rbita de Urano."
   - "Urano gira de lado, como se rolasse por sua \xF3rbita."
   - "Com isso, os polos passam d\xE9cadas expostos ao Sol e depois \xE0 escurid\xE3o."
   Quiz: {fileID: 11400000, guid: f96599ba550a9ac4e951d1909cc75b83, type: 2}

@@ -230,37 +230,16 @@ namespace Lumen.EditorTools
         }
 
         /// <summary>
-        /// Farol visivel (esfera brilhante do pacote) marcando a saida do tutorial.
-        /// Ao atravessa-lo, o tutorial termina e o farol desaparece.
+        /// Farol visivel marcando a saida do tutorial (sprites brilhantes feitos por codigo,
+        /// ver TutorialBeacon). Remove o farol antigo (esfera do pacote), se existir.
         /// </summary>
         private static void EnsureExitBeacon(Transform exitRoot)
         {
-            var beacon = exitRoot.Find("TutorialBeacon");
-            if (beacon != null)
-            {
-                beacon.localPosition = Vector3.zero;
-                beacon.localScale = Vector3.one * 30f;
-                return;
-            }
+            var old = exitRoot.Find("TutorialBeacon");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
 
-            string beaconPath = $"{PlanetsPackPath}/Prefabs/Sun Sphere.prefab";
-            var beaconPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(beaconPath);
-            if (beaconPrefab == null)
-            {
-                Debug.LogWarning($"[LUMEN] Não encontrei '{beaconPath}' para o farol de saída do tutorial.");
-                return;
-            }
-
-            var beaconObj = PrefabUtility.InstantiatePrefab(beaconPrefab) as GameObject;
-            if (beaconObj == null) return;
-
-            beaconObj.name = "TutorialBeacon";
-            beaconObj.transform.SetParent(exitRoot, false);
-            beaconObj.transform.localPosition = Vector3.zero;
-            beaconObj.transform.localScale = Vector3.one * 30f;
-
-            foreach (var trigCol in beaconObj.GetComponentsInChildren<Collider>())
-                Object.DestroyImmediate(trigCol);
+            if (exitRoot.GetComponent<TutorialBeacon>() == null)
+                exitRoot.gameObject.AddComponent<TutorialBeacon>();
         }
 
         private static void EnsureHud()
@@ -1165,7 +1144,17 @@ namespace Lumen.EditorTools
         {
             string path = $"{DataFolder}/Phases/{fileName}";
             var existing = AssetDatabase.LoadAssetAtPath<PhaseData>(path);
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                // Assets antigos traziam "Aproximando de X." como primeira fala: troca pela fala de entrada em orbita.
+                if (existing.NarrationLines != null && existing.NarrationLines.Length > 0 && narration.Length > 0
+                    && existing.NarrationLines[0].StartsWith("Aproximando"))
+                {
+                    existing.NarrationLines[0] = narration[0];
+                    EditorUtility.SetDirty(existing);
+                }
+                return existing;
+            }
 
             var phase = ScriptableObject.CreateInstance<PhaseData>();
             phase.PlanetName = planetName;

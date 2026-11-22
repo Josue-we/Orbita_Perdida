@@ -41,7 +41,7 @@ namespace Lumen.Gameplay
         private Vector3 _towardPlanet = Vector3.forward;
         private CameraFollow _cameraFollow;
 
-        private static readonly string[] CelebrationLines =
+        public static readonly string[] CelebrationLines =
         {
             "Muito bem! Fragmento de conhecimento recebido.",
             "Isso! Energia restaurada, LUMEN.",

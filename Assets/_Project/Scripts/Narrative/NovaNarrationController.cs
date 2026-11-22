@@ -19,9 +19,15 @@ namespace Lumen.Narrative
         [SerializeField] private float secondsPerLine = 3.5f;
 
         private float _fitHeight; // altura (unidades de canvas) que o texto das falas precisa
+        private AudioSource _voice;
 
         private void Awake()
         {
+            _voice = gameObject.AddComponent<AudioSource>();
+            _voice.playOnAwake = false;
+            _voice.spatialBlend = 0f; // voz 2D: sempre no mesmo volume, sem direcao
+            _voice.volume = GameTuning.NovaVoiceVolume;
+
             UiTextTuning.Apply(captionText, GameTuning.NovaCaptionFontSize);
             LayoutPanel(GameTuning.NovaPanelPadding * 2f + GameTuning.NovaCaptionFontSize * 1.3f);
         }
@@ -91,6 +97,16 @@ namespace Lumen.Narrative
                 // Falas curtas ("Estamos entrando na orbita...") nao precisam de 3,5 s.
                 float duration = line.Length <= 48 ? GameTuning.ShortLineSeconds : secondsPerLine;
 
+                // Com voz, a fala dura o tempo do audio (a legenda acompanha a narracao).
+                AudioClip clip = NovaVoice.Load(line);
+                if (clip != null && _voice != null)
+                {
+                    _voice.Stop();
+                    _voice.clip = clip;
+                    _voice.Play();
+                    duration = clip.length + GameTuning.NovaVoiceGapSeconds;
+                }
+
                 float elapsed = 0f;
                 while (elapsed < duration)
                 {
@@ -98,6 +114,8 @@ namespace Lumen.Narrative
                     elapsed += Time.deltaTime;
                     yield return null;
                 }
+
+                if (_voice != null && _voice.isPlaying) _voice.Stop();
             }
 
             if (panelRoot != null) panelRoot.SetActive(false);

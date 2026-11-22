@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Saturno
   Challenge: 1
   NarrationLines:
-  - Aproximando de Saturno.
+  - "Estamos entrando na \xF3rbita de Saturno."
   - "O gigante dos an\xE9is: bilh\xF5es de fragmentos de gelo e rocha."
   - "Voc\xEA est\xE1 passando pelo planeta mais fotog\xEAnico do Sistema Solar."
   Quiz: {fileID: 11400000, guid: 3971845d493885a4098ef01a68947d91, type: 2}

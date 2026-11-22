@@ -125,6 +125,24 @@ Precisa do **Unity 6 (URP)**. Antes de abrir a cena:
 O botão **Jogar** (ou `Enter`) abre a introdução; a partir daí o LUMEN está no
 seu controle.
 
+## Física, distâncias e luz
+
+- **Planetas sólidos:** o Sol e os planetas têm colisão simples (`PlanetBody`): se a nave encosta, é
+  empurrada para fora e desliza pela superfície. Não usa Rigidbody, então é leve.
+- **Distância em km:** o HUD mostra a distância até o próximo planeta em km (`DistanceFormat`), por
+  exemplo "Siga até Urano (939,6 milhões de km)". Escala fictícia: 1 unidade do jogo = 280.000 km.
+- **Luz do Sol:** a luz direcional sai do Sol em direção à nave (`SunLight`): lado iluminado quente e
+  lado escuro azulado, para ficar claro que a luz vem do Sol.
+- **Farol do tutorial:** esfera azul brilhante feita só com sprites (`TutorialBeacon`); some quando a
+  nave a atravessa.
+
+## Voz da NOVA
+
+As curiosidades de cada planeta (e as falas de comemoração) têm narração em áudio. Os arquivos ficam em
+`Assets/_Project/Resources/NovaVoice`, com o nome vindo de um hash do texto da fala. Se mudar uma fala em
+`Data/Phases`, rode **`LUMEN > Gerar Vozes da NOVA`**: ele usa a voz pt-BR do Windows (Microsoft Maria),
+gera só os áudios que faltam e apaga os que não valem mais. Sem áudio, a fala segue só com legenda.
+
 ## Desempenho
 
 O jogo precisa rodar em máquinas **sem placa de vídeo dedicada**. Por isso as
@@ -134,7 +152,7 @@ na carga da cena e a taxa de quadros é limitada a 60 FPS (`PerformanceTuning`).
 ## Atalhos de teste (só no Editor)
 
 Durante o Play no Editor, `F1`–`F4` teleportam a nave para Saturno, Júpiter, Marte e
-Terra (`DebugTeleport`). Isso não existe no build.
+Terra, `F5` para perto do Sol e `F6` para perto do próximo planeta (`DebugTeleport`). Isso não existe no build.
 
 ## Editando o conteúdo do jogo
 

@@ -21,6 +21,12 @@ namespace Lumen.Gameplay
 
         private float WorldRadius => transform.lossyScale.x * 0.5f;
 
+        private void Awake()
+        {
+            // Garante o farol visivel mesmo em cenas montadas antes dele existir.
+            if (GetComponent<TutorialBeacon>() == null) gameObject.AddComponent<TutorialBeacon>();
+        }
+
         private void Update()
         {
             if (_triggered) return;
@@ -73,8 +79,8 @@ namespace Lumen.Gameplay
 
             // O farol de saida some quando o jogador atravessa: sinal visual claro
             // de que o tutorial terminou e o jogo comecou.
-            var beacon = transform.Find("TutorialBeacon");
-            if (beacon != null) Destroy(beacon.gameObject);
+            var beacon = GetComponent<TutorialBeacon>();
+            if (beacon != null) beacon.Hide();
 
             EventBus.RaiseTutorialCompleted();
             Debug.Log("[LUMEN] Tutorial concluído - o jogo começou. Próxima parada: Netuno.");

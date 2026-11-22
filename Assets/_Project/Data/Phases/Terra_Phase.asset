@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Terra
   Challenge: 0
   NarrationLines:
-  - Aproximando da Terra.
+  - "Estamos entrando na \xF3rbita da Terra."
   - "Depois de coletar conhecimento planeta a planeta, o retorno est\xE1 quase completo."
   - "LUMEN, prepare-se para concluir o \xFAltimo quiz e voltar para casa."
   Quiz: {fileID: 11400000, guid: 0219701e3869f864cba14a0f0bb7a97e, type: 2}

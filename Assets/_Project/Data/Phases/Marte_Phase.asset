@@ -15,7 +15,7 @@ MonoBehaviour:
   PlanetName: Marte
   Challenge: 0
   NarrationLines:
-  - Aproximando de Marte.
+  - "Estamos entrando na \xF3rbita de Marte."
   - "O planeta vermelho, coberto por \xF3xido de ferro."
   - "Foi aqui que rovers j\xE1 exploraram a superf\xEDcie."
   Quiz: {fileID: 11400000, guid: f46b85c83d9b13543b023229eb8c9874, type: 2}
