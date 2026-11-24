@@ -137,6 +137,8 @@ namespace Lumen.Audio
             EventBus.OnFragmentCollected += HandleFragmentCollected;
             EventBus.OnQuizOpened += HandleQuizOpened;
             EventBus.OnQuizClosed += HandleQuizClosed;
+            EventBus.OnNarrationStarted += HandleNarrationStarted;
+            EventBus.OnNarrationEnded += HandleNarrationEnded;
             EventBus.OnGameStarted += HandleGameStarted;
             EventBus.OnShipThrustChanged += HandleShipThrustChanged;
         }
@@ -149,6 +151,10 @@ namespace Lumen.Audio
             EventBus.OnFragmentCollected -= HandleFragmentCollected;
             EventBus.OnQuizOpened -= HandleQuizOpened;
             EventBus.OnQuizClosed -= HandleQuizClosed;
+            EventBus.OnNarrationStarted -= HandleNarrationStarted;
+            EventBus.OnNarrationEnded -= HandleNarrationEnded;
+            _quizOpen = false;
+            _narrating = false;
             EventBus.OnGameStarted -= HandleGameStarted;
             EventBus.OnShipThrustChanged -= HandleShipThrustChanged;
 
@@ -277,8 +283,19 @@ namespace Lumen.Audio
         private void HandleAnswerIncorrect() => PlaySfx(incorrectSfx);
         private void HandleFragmentCollected(string planetName) => PlaySfx(collectSfx);
 
-        private void HandleQuizOpened() => FadeMusicTo(quizMusicMultiplier, duckFadeSeconds);
-        private void HandleQuizClosed() => FadeMusicTo(1f, duckFadeSeconds);
+        // A trilha fica no mesmo volume baixo do quiz enquanto o quiz esta em tela OU a NOVA fala,
+        // para a voz ser ouvida com clareza. So volta ao normal quando nenhum dos dois esta ativo.
+        private bool _quizOpen, _narrating;
+
+        private void HandleQuizOpened() { _quizOpen = true; UpdateDuck(); }
+        private void HandleQuizClosed() { _quizOpen = false; UpdateDuck(); }
+        private void HandleNarrationStarted() { _narrating = true; UpdateDuck(); }
+        private void HandleNarrationEnded() { _narrating = false; UpdateDuck(); }
+
+        private void UpdateDuck()
+        {
+            FadeMusicTo(_quizOpen || _narrating ? quizMusicMultiplier : 1f, duckFadeSeconds);
+        }
 
         /// <summary>Jogador clicou "Jogar": troca para a trilha da gameplay com um crossfade curto.</summary>
         private void HandleGameStarted()

@@ -225,11 +225,22 @@ namespace Lumen.Gameplay
             float total = GameTuning.OrbitGlideSeconds;
             float t = 0f;
 
+            // A nave desliza ~speed0*total/3 metros ate parar. Com boost isso passava de 100 m e
+            // entrava no planeta: limita a velocidade para parar ANTES da superficie.
+            var body = GetComponent<PlanetBody>();
+            if (body != null)
+            {
+                float toSurface = Vector3.Distance(ship.position, transform.position) - body.Radius - PlanetBody.SurfaceMargin;
+                float room = Mathf.Max(0f, toSurface - GameTuning.OrbitStopBuffer);
+                speed0 = Mathf.Min(speed0, 3f * room / total);
+            }
+
             while (t < total && ship != null)
             {
                 t += Time.deltaTime;
                 float k = Mathf.Clamp01(1f - t / total);
                 ship.position += ship.forward * (speed0 * k * k * Time.deltaTime);
+                ship.position = PlanetBody.PushOut(ship.position, out _, out _); // nunca atravessa o planeta
                 UpdateOrbitCamera(ship);
                 yield return null;
             }

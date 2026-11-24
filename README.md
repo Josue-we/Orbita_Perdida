@@ -140,8 +140,10 @@ seu controle.
 
 As curiosidades de cada planeta (e as falas de comemoração) têm narração em áudio. Os arquivos ficam em
 `Assets/_Project/Resources/NovaVoice`, com o nome vindo de um hash do texto da fala. Se mudar uma fala em
-`Data/Phases`, rode **`LUMEN > Gerar Vozes da NOVA`**: ele usa a voz pt-BR do Windows (Microsoft Maria),
-gera só os áudios que faltam e apaga os que não valem mais. Sem áudio, a fala segue só com legenda.
+`Data/Phases`, rode **`LUMEN > Gerar Vozes da NOVA`**: ele usa a voz neural pt-BR da Microsoft
+(`pt-BR-FranciscaNeural`) pelo pacote **edge-tts** do Python (instalado via pip na primeira vez; precisa de
+Python 3 no PC e de internet só ao gerar). Refaz o que falta e apaga os áudios que não valem mais.
+Sem áudio, a fala segue só com legenda. Enquanto a NOVA fala, a trilha abaixa para o mesmo volume do quiz.
 
 ## Desempenho
 

@@ -29,6 +29,8 @@ namespace Lumen.Core
         public static event Action<string> OnRescued; // local para onde a nave voltou
         public static event Action OnQuizOpened;
         public static event Action OnQuizClosed;
+        public static event Action OnNarrationStarted; // NOVA comecou a falar (a trilha abaixa)
+        public static event Action OnNarrationEnded;
         public static event Action OnGameStarted; // jogador clicou "Jogar" no menu inicial
         public static event Action<ShipThrustState> OnShipThrustChanged; // so dispara quando muda
 
@@ -115,6 +117,16 @@ namespace Lumen.Core
         public static void RaiseQuizClosed()
         {
             OnQuizClosed?.Invoke();
+        }
+
+        public static void RaiseNarrationStarted()
+        {
+            OnNarrationStarted?.Invoke();
+        }
+
+        public static void RaiseNarrationEnded()
+        {
+            OnNarrationEnded?.Invoke();
         }
 
         public static void RaiseGameStarted()

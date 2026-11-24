@@ -53,6 +53,7 @@ namespace Lumen.Core
 
         // --- Entrada em orbita (camera cinematografica + nave desacelerando) ---
         public const float OrbitGlideSeconds = 2.6f;      // tempo ate a nave parar
+        public const float OrbitStopBuffer = 15f;         // folga entre onde a nave para e a superficie
         public const float OrbitCamSide = 10f;            // camera ao lado da nave
         public const float OrbitCamUp = 4f;
         public const float OrbitCamBack = 10f;

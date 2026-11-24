@@ -12,14 +12,16 @@ using Debug = UnityEngine.Debug;
 namespace Lumen.EditorTools
 {
     /// <summary>
-    /// Gera a voz da NOVA offline com a voz pt-BR do Windows (System.Speech, via PowerShell).
-    /// Um WAV por fala em Assets/_Project/Resources/NovaVoice, nomeado pelo hash do texto
-    /// (ver NovaVoice). Falas que ja tem audio sao puladas; audios de falas que nao existem
-    /// mais sao apagados.
+    /// Gera a voz da NOVA com a voz neural pt-BR da Microsoft (Francisca), via pacote edge-tts
+    /// do Python. Na primeira vez instala o edge-tts (pip). Precisa de internet so ao gerar.
+    /// Um MP3 por fala em Assets/_Project/Resources/NovaVoice, nomeado pelo hash do texto
+    /// (ver NovaVoice). Refaz todos a cada execucao e apaga audios de falas que nao existem mais.
     /// </summary>
     public static class NovaVoiceGenerator
     {
         private const string OutFolder = "Assets/_Project/Resources/NovaVoice";
+        private const string Voice = "pt-BR-FranciscaNeural"; // alternativa masculina: pt-BR-AntonioNeural
+        private const string Rate = "-4%";                     // um pouco mais devagar: soa mais natural
 
         [MenuItem("LUMEN/Gerar Vozes da NOVA")]
         public static void Generate()
@@ -31,67 +33,59 @@ namespace Lumen.EditorTools
                 return;
             }
 
-            Directory.CreateDirectory(OutFolder);
-            string absFolder = Path.GetFullPath(OutFolder);
-
-            // Apaga audios de falas que mudaram ou saíram.
-            var keep = new HashSet<string>();
-            foreach (string line in lines) keep.Add(NovaVoice.Key(line) + ".wav");
-            foreach (string file in Directory.GetFiles(absFolder, "*.wav"))
+            string python = FindPython();
+            if (python == null)
             {
-                if (!keep.Contains(Path.GetFileName(file)))
-                {
-                    File.Delete(file);
-                    string meta = file + ".meta";
-                    if (File.Exists(meta)) File.Delete(meta);
-                }
-            }
-
-            // Lista "arquivo|texto" em UTF-8 para o PowerShell (acentos preservados).
-            var todo = new StringBuilder();
-            int pending = 0;
-            foreach (string line in lines)
-            {
-                string wav = Path.Combine(absFolder, NovaVoice.Key(line) + ".wav");
-                if (File.Exists(wav)) continue;
-                todo.Append(wav).Append('|').Append(line.Replace("\r", " ").Replace("\n", " ")).Append('\n');
-                pending++;
-            }
-
-            if (pending == 0)
-            {
-                Debug.Log($"[LUMEN] Vozes da NOVA já estão em dia ({lines.Count} falas).");
+                Debug.LogError("[LUMEN] Python 3 nao encontrado no PC. Instale o Python (python.org) e rode o menu de novo.");
                 return;
             }
 
-            string tmp = Path.Combine(Path.GetTempPath(), "lumen_nova_voice");
-            Directory.CreateDirectory(tmp);
-            string listPath = Path.Combine(tmp, "falas.txt");
-            string scriptPath = Path.Combine(tmp, "gerar.ps1");
-            File.WriteAllText(listPath, todo.ToString(), new UTF8Encoding(false));
-            File.WriteAllText(scriptPath, PowerShellScript, new UTF8Encoding(true)); // BOM: PowerShell 5 le UTF-8
-
-            var psi = new ProcessStartInfo("powershell.exe",
-                $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" \"{listPath}\"")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-            };
-
             try
             {
-                EditorUtility.DisplayProgressBar("LUMEN", "Gerando vozes da NOVA...", 0.5f);
-                using (var proc = Process.Start(psi))
+                EditorUtility.DisplayProgressBar("LUMEN", "Instalando/atualizando o edge-tts...", 0.05f);
+                var pip = Run(python, "-m pip install --user --upgrade edge-tts", 300000);
+                if (pip.exit != 0)
                 {
-                    string output = proc.StandardOutput.ReadToEnd();
-                    string error = proc.StandardError.ReadToEnd();
-                    proc.WaitForExit(180000);
-                    Debug.Log("[LUMEN] Vozes da NOVA: " + output.Trim());
-                    if (!string.IsNullOrWhiteSpace(error)) Debug.LogWarning("[LUMEN] PowerShell: " + error.Trim());
+                    Debug.LogError("[LUMEN] Falha ao instalar o edge-tts: " + pip.err);
+                    return;
                 }
+
+                Directory.CreateDirectory(OutFolder);
+                string absFolder = Path.GetFullPath(OutFolder);
+
+                // Apaga audios antigos (de outras vozes ou de falas que mudaram).
+                var keep = new HashSet<string>();
+                foreach (string line in lines) keep.Add(NovaVoice.Key(line) + ".mp3");
+                foreach (string file in Directory.GetFiles(absFolder))
+                {
+                    string name = Path.GetFileName(file);
+                    bool audio = name.EndsWith(".wav") || name.EndsWith(".mp3") || name.EndsWith(".wav.meta") || name.EndsWith(".mp3.meta");
+                    if (!audio) continue;
+                    if (keep.Contains(name) || keep.Contains(name.Replace(".meta", ""))) continue;
+                    File.Delete(file);
+                }
+
+                string tmp = Path.Combine(Path.GetTempPath(), "lumen_nova_voice");
+                Directory.CreateDirectory(tmp);
+                string textFile = Path.Combine(tmp, "fala.txt");
+
+                int done = 0;
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    EditorUtility.DisplayProgressBar("LUMEN", $"Gerando voz da NOVA ({i + 1}/{lines.Count})...", 0.1f + 0.9f * i / lines.Count);
+                    string mp3 = Path.Combine(absFolder, NovaVoice.Key(lines[i]) + ".mp3");
+                    File.WriteAllText(textFile, lines[i], new UTF8Encoding(false));
+
+                    // Ate 3 tentativas: o servico online pode falhar de vez em quando.
+                    for (int attempt = 0; attempt < 3 && !IsValid(mp3); attempt++)
+                    {
+                        var r = Run(python, $"-m edge_tts --voice {Voice} --rate={Rate} --file \"{textFile}\" --write-media \"{mp3}\"", 90000);
+                        if (!IsValid(mp3) && attempt == 2) Debug.LogWarning("[LUMEN] edge-tts falhou em: " + lines[i] + "\n" + r.err);
+                    }
+                    if (IsValid(mp3)) done++;
+                }
+
+                Debug.Log($"[LUMEN] Vozes da NOVA ({Voice}): {done}/{lines.Count} falas geradas.");
             }
             finally
             {
@@ -99,6 +93,54 @@ namespace Lumen.EditorTools
             }
 
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>Audio valido: existe e nao esta vazio (o edge-tts as vezes deixa um arquivo de 0 bytes).</summary>
+        private static bool IsValid(string path)
+        {
+            if (!File.Exists(path)) return false;
+            if (new FileInfo(path).Length > 1000) return true;
+            File.Delete(path);
+            return false;
+        }
+
+        /// <summary>Acha um Python 3: tenta o launcher "py" e depois "python".</summary>
+        private static string FindPython()
+        {
+            foreach (string candidate in new[] { "py", "python", "python3" })
+            {
+                try
+                {
+                    var r = Run(candidate, "--version", 15000);
+                    if (r.exit == 0 && (r.output + r.err).Contains("Python 3")) return candidate;
+                }
+                catch (System.ComponentModel.Win32Exception) { /* nao esta no PATH */ }
+            }
+            return null;
+        }
+
+        private static (int exit, string output, string err) Run(string file, string args, int timeoutMs)
+        {
+            var psi = new ProcessStartInfo(file, args)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            };
+
+            using (var proc = Process.Start(psi))
+            {
+                // Le a saida de erro em paralelo para o buffer nunca encher e travar o processo.
+                string err = "";
+                var errTask = System.Threading.Tasks.Task.Run(() => err = proc.StandardError.ReadToEnd());
+                string output = proc.StandardOutput.ReadToEnd();
+                if (!proc.WaitForExit(timeoutMs)) { try { proc.Kill(); } catch { } }
+                errTask.Wait(2000);
+                return (proc.HasExited ? proc.ExitCode : -1, output, err);
+            }
         }
 
         private static List<string> CollectLines()
@@ -122,32 +164,6 @@ namespace Lumen.EditorTools
             foreach (string line in PlanetApproachTrigger.CelebrationLines) Add(line);
             return result;
         }
-
-        private const string PowerShellScript = @"
-param([string]$ListPath)
-Add-Type -AssemblyName System.Speech
-$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
-$voices = $s.GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo }
-$pt = $voices | Where-Object { $_.Culture.Name -eq 'pt-BR' }
-if (-not $pt) { Write-Output ('ERRO: nenhuma voz pt-BR instalada. Vozes: ' + (($voices | ForEach-Object { $_.Name }) -join ', ')); exit 1 }
-$pick = $pt | Where-Object { $_.Gender -eq 'Female' } | Select-Object -First 1
-if (-not $pick) { $pick = $pt | Select-Object -First 1 }
-$s.SelectVoice($pick.Name)
-$s.Rate = -1
-$count = 0
-foreach ($row in [System.IO.File]::ReadAllLines($ListPath, [System.Text.Encoding]::UTF8)) {
-  if ([string]::IsNullOrWhiteSpace($row)) { continue }
-  $i = $row.IndexOf('|')
-  $path = $row.Substring(0, $i)
-  $text = $row.Substring($i + 1)
-  $s.SetOutputToWaveFile($path)
-  $s.Speak($text)
-  $s.SetOutputToNull()
-  $count++
-}
-$s.Dispose()
-Write-Output ('Voz: ' + $pick.Name + ' - ' + $count + ' falas geradas.')
-";
     }
 
     /// <summary>Audios da NOVA: mono e comprimidos (Vorbis), para o build ficar leve.</summary>

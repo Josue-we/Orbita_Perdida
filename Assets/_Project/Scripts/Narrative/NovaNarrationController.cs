@@ -89,6 +89,7 @@ namespace Lumen.Narrative
             LayoutPanel(tallest + GameTuning.NovaPanelPadding * 2f);
 
             if (panelRoot != null) panelRoot.SetActive(true);
+            EventBus.RaiseNarrationStarted();
 
             foreach (string line in lines)
             {
@@ -119,6 +120,7 @@ namespace Lumen.Narrative
             }
 
             if (panelRoot != null) panelRoot.SetActive(false);
+            EventBus.RaiseNarrationEnded();
             onFinished?.Invoke();
         }
 
